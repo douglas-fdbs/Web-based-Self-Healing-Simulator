@@ -142,6 +142,8 @@
   function runInput(input, opts = {}) {
     if (!player.atEnd()) player.toEnd();
     const base = app.currentState();
+    // a falha de abertura vem sempre da seleção visível do usuário
+    Object.entries(base.sw).forEach(([id, sw]) => { sw.stuck = app.stuck.has(id); });
     const full = Object.assign({ state: base, stuck: [...app.stuck], options: app.options, cause: app.cause }, input);
     const res = SH.simulator.run(app.model, full);
     app.cause = res.siapCause;
@@ -190,7 +192,7 @@
   app.runTest = (t) => {
     if (app.scnId !== 'tcc2015') loadScenario('tcc2015', true);
     app.cause = null;
-    app.stuck = new Set();
+    app.stuck = new Set(t.setup.stuck || []);
     const input = SH.labs.buildInput(app.model, t);
     input.options = Object.assign({}, defaultOptions(), {
       breakerTime: app.options.breakerTime, gooseLatency: app.options.gooseLatency, Mmax: app.options.Mmax,
