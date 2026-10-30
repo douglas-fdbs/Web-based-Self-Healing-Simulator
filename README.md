@@ -6,6 +6,8 @@ O simulador foi desenvolvido com assistência do Claude (Anthropic) pela Equipe 
 
 A referência principal é o TCC de Mário Sérgio de Lima Rodrigues (UFC, 2015), *Teste e validação das funções de proteção baseadas na norma IEC 61850 propostas para implantação no projeto piloto da rede de distribuição inteligente de Aquiraz*.
 
+**Guia de uso passo a passo:** [`docs/GUIA_DE_USO.md`](docs/GUIA_DE_USO.md) (o resumo está na aba *Guia* do site). Ele explica cada parte da tela, traz roteiros com o que se obtém em cada um e indica onde está cada figura e tabela do TCC.
+
 ## Como executar
 
 1. Abra o arquivo `index.html` em um navegador (Chrome, Edge ou Firefox). Não há instalação nem servidor: os scripts são carregados direto do disco.
@@ -30,12 +32,12 @@ A referência principal é o TCC de Mário Sérgio de Lima Rodrigues (UFC, 2015)
 
 | Opção | Figura no TCC | Origem dos dados elétricos |
 |---|---|---|
-| Rede atual (padrão) | Fig. 4.2, "Topologia do sistema de distribuição Aquiraz" | Rodrigues (2015), Tabs. 4.1 a 4.13 e Anexos A e B |
-| Primeira topologia | Fig. 4.1, "Primeira topologia do sistema de distribuição Aquiraz" | Nobre (2013), Tabs. 3.1 a 3.8, 4.1, 4.2 e 4.13 |
+| Fig. 4.2: rede do TCC (base) | Fig. 4.2, "Topologia do sistema de distribuição Aquiraz" | Rodrigues (2015), Tabs. 4.1 a 4.13 e Anexos A e B |
+| Fig. 4.1: primeira topologia (extra) | Fig. 4.1, "Primeira topologia do sistema de distribuição Aquiraz" | Nobre (2013), Tabs. 3.1 a 3.8, 4.1, 4.2 e 4.13 |
 
 **Contingências.** Falta em qualquer ponto de qualquer trecho (clique no diagrama): trifásica, bifásica, fase-terra franca, fase-terra mínima (Rc = 100 Ω) ou com resistência definida pelo usuário; permanente ou temporária. Também perda de subestação, falta no barramento de 13,8 kV da SE AQZ, falha de abertura de disjuntor e comandos manuais de abrir/fechar com intertravamento contra paralelismo.
 
-**Proteção.** Relés SEL-751 modelados com elementos 50P/51P/50N/51N (curvas IEC), ciclo de religamento por tentativa (notação do TCC, por exemplo `1I+2T`), bloqueio, rearme e grupos de ajuste selecionados automaticamente conforme o sentido de alimentação ou a contingência (função SIAP do projeto Aquiraz).
+**Proteção.** Relés SEL-751 modelados com elementos 50P/51P/50N/51N (curvas IEC), ciclo de religamento pelo critério do autor (na SE, `1I+2T` = um religamento instantâneo e dois temporizados, isto é, aberturas 50, 50, 51, 51; nos religadores de linha, `3I` = três aberturas), bloqueio, rearme e grupos de ajuste selecionados automaticamente conforme o sentido de alimentação ou a contingência (função SIAP do projeto Aquiraz).
 
 **IEC 61850.** Seletividade lógica (bloqueio do instantâneo a montante por GOOSE) e falha de disjuntor (50BF) com trip remoto, latência configurável, perda seletiva de mensagens e a solução do TCC com bloqueio do 51 e 51 de retaguarda com somador de 200 ms. Os datasets e nós lógicos seguem a Tabela 5.1 do TCC.
 
@@ -44,6 +46,8 @@ A referência principal é o TCC de Mário Sérgio de Lima Rodrigues (UFC, 2015)
 **Animação e análises.** Fluxo animado com a cor da subestação que alimenta cada trecho, câmera lenta automática nos transitórios de milissegundos e avanço rápido nos tempos mortos, arcos das mensagens GOOSE, contagem regressiva do religamento, linha do tempo e registro de eventos exportável em CSV. Painéis de curto-circuito com comparação ao TCC, carregamento por trecho, coordenograma tempo × corrente do caminho selecionado e edição dos ajustes.
 
 **Critérios de coordenação.** A aba *Proteção* verifica as margens de coordenação e a sensibilidade das cadeias de alcance máximo (seção 4.7.1 do TCC) no esquema escolhido e mostra os pares fora do critério.
+
+**Gráficos do TCC.** Coordenogramas de fase e neutro das Figs. 4.9 a 4.13 (cadeias de alcance máximo da Fig. 4.6), famílias de curvas IEC e IEEE (Fig. 2.3 e Tab. 2.1), gráficos I × t dos ensaios de sobrecorrente (Figs. A1 a A4) e diagrama de tempos no estilo do Sequenc (Figs. 5.12 a 5.22), com partida, bloqueio recebido, estado do disjuntor, trip, 50BF e religamento de cada relé. A tabela de ajustes mostra o estado do religamento (repouso, ciclo ou bloqueio, Fig. 3.13).
 
 **Ensaios do Capítulo 5.** Os ensaios de laboratório descritos no TCC, os religamentos isolados do Apêndice B, os pontos de sobrecorrente do Apêndice A e cinco ensaios fase-terra que só aparecem nos relatórios da mala de testes (religamento, seletividade lógica e 50BF nos pares AQZ_MT/AQZ, AQZ/RL1 e RL1/RL2) podem ser executados na aba *Ensaios*, com o valor citado no TCC, o valor medido no relatório da mala CE-6006 e o valor simulado.
 
@@ -92,12 +96,12 @@ js/core/                   motor de cálculo, sem dependência de interface
   protection.js            curvas IEC, elementos 50/51, ciclo 79, grupos de ajuste
   simulator.js             simulador de eventos discretos (proteção, GOOSE, 50BF, 79, SRA)
   selfhealing.js           localização, isolamento e restauração
-js/data/                   dados das redes e ensaios, com a origem de cada valor
+js/data/                   dados das redes, ensaios e conteúdo da aba Guia, com a origem de cada valor
 js/ui/                     diagrama SVG, gráficos e painéis
 js/app.js                  controlador da interface e reprodução animada
 tests/validation.test.js   validação automática (node --test)
 tools/                     relatório de validação e gerador de arquivo único
-docs/                      metodologia, validação e registro do desenvolvimento
+docs/                      guia de uso, metodologia, validação e registro do desenvolvimento
 ```
 
 Os arquivos de `js/core` e `js/data` funcionam tanto no navegador quanto no Node.js, o que permite testar o motor sem a interface.

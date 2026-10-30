@@ -124,6 +124,8 @@
   app.resetSettings = () => {
     app.options = defaultOptions();
     app.saveOptions();
+    app.settingsSet = 'base';
+    SH.ui.storeSet('aqz-sh-set', 'base');
     syncHeader();
     const sel = app.sel;
     loadScenario(app.scnId, true);

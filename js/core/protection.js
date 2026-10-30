@@ -41,14 +41,19 @@
   }
 
   /**
-   * Converte a notação de ciclo do TCC em sequência de operações.
-   * "1I+2T" -> ['I','T','T'] (1 operação com 50 habilitado e 2 temporizadas)
-   * "3I"    -> ['I','I','I'];  "Bloqueado" -> ['I'] sem religamento.
+   * Converte a notação de ciclo em sequência de operações (aberturas).
+   * Notação "aberturas" (padrão; religadores de linha no TCC e OAP de campo):
+   *   "1I+2T" -> ['I','T','T'];  "3I" -> ['I','I','I'];  "Bloqueado" -> ['I'].
+   * Notação "religamentos" (religadores da SE no TCC): "1I+2T" -> ['I','I','T','T'].
    * O número de religamentos é (operações − 1).
    */
-  function parseCycle(cycle) {
+  function parseCycle(cycle, notation) {
     if (Array.isArray(cycle)) return cycle.slice();
     if (!cycle || /bloq/i.test(cycle)) return ['I'];
+    // Notação "religamentos" (religadores da SE no TCC, Tab. 4.11: "um religamento
+    // instantâneo e dois temporizados"): a lista descreve as operações depois de cada
+    // religamento; a primeira abertura é sempre instantânea. "1I+2T" -> I, I, T, T.
+    if (notation === 'religamentos') return ['I'].concat(parseCycle(cycle));
     const ops = [];
     String(cycle).split('+').forEach((part) => {
       const m = part.trim().match(/^(\d+)\s*([IT])$/i);
@@ -83,6 +88,8 @@
   /** Estado dinâmico de um relé durante a simulação. */
   /** Ciclo e tempo morto efetivos: o grupo ativo pode ter os seus (ex.: RL3 no Anexo B). */
   function cycleOf(cfg, group) { return (group && group.cycle) || cfg.cycle; }
+  function notationOf(cfg, group) { return (group && group.cycleNotation) || cfg.cycleNotation || 'aberturas'; }
+  function opsOf(cfg, group) { return parseCycle(cycleOf(cfg, group), notationOf(cfg, group)); }
   function deadOf(cfg, group) { return group && group.deadTime != null ? group.deadTime : cfg.deadTime; }
   function buildDead(ops, d) {
     return Array.isArray(d) ? d.slice() : new Array(Math.max(ops.length - 1, 0)).fill(d || 10);
@@ -90,12 +97,12 @@
   /** Reaplica ciclo e tempo morto do grupo ativo (só fora de um ciclo de religamento). */
   function applyGroupCycle(rt) {
     if (rt.shot !== 0) return;
-    rt.ops = parseCycle(cycleOf(rt.cfg, rt.group));
+    rt.ops = opsOf(rt.cfg, rt.group);
     rt.dead = buildDead(rt.ops, deadOf(rt.cfg, rt.group));
   }
 
   function createRelayRuntime(id, cfg, group) {
-    const ops = parseCycle(cycleOf(cfg, group));
+    const ops = opsOf(cfg, group);
     const dead = buildDead(ops, deadOf(cfg, group));
     return {
       id,
@@ -241,7 +248,7 @@
   }
 
   const api = {
-    CURVES, ELEMENTS, EL_LABEL, curveTime, parseCycle, cycleLabel, cycleOf, deadOf, applyGroupCycle, createRelayRuntime,
+    CURVES, ELEMENTS, EL_LABEL, curveTime, parseCycle, cycleLabel, cycleOf, notationOf, opsOf, deadOf, applyGroupCycle, createRelayRuntime,
     updateRelay, resetElements, anyPickup, isBlocked, staticTime, selectGroup,
   };
   SH.protection = api;

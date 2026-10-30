@@ -1,6 +1,6 @@
 # Registro do desenvolvimento assistido por IA (Equipe 3, Claude)
 
-Registro factual das sessões de desenvolvimento, para subsidiar a comparação com o simulador da Equipe 2 (Gemini) no artigo. As seções 1 a 10 tratam da primeira sessão; a seção 11, da revisão feita com a pasta ARTIGO_REI; a seção 12, da auditoria de cobertura contra o TCC; a seção 13, da definição da base.
+Registro factual das sessões de desenvolvimento, para subsidiar a comparação com o simulador da Equipe 2 (Gemini) no artigo. As seções 1 a 10 tratam da primeira sessão; a seção 11, da revisão feita com a pasta ARTIGO_REI; a seção 12, da auditoria de cobertura contra o TCC; a seção 13, da definição da base; a seção 14, do critério de religamento, dos gráficos do TCC e do guia de uso.
 
 ## 1. Contexto
 
@@ -109,7 +109,7 @@ Arquivos que o conector do Drive não conseguiu baixar (acima de cerca de 6 MB):
 ### 11.2 Achados
 
 - **Ajustes de ESB, AGF e RS7.** Os valores adotados na primeira sessão (cópia de dispositivos equivalentes) foram substituídos pelos da planilha. O 51N de RS7 na planilha (71,1 A) segue um critério anterior e deixaria RS7 menos sensível que 21I2 (24 A); foi usado o critério da Tab. 4.12 (22 A).
-- **Ajustes do laboratório diferem da Tab. 4.13 em dois pontos:** ciclo de AQZ (E79 = 3, 50 só em SH0 e SH1, isto é, 2I+2T) e atraso do 50 de RL2 (0,02 s contra 0,03 s). RL2 também tinha E79 = 1 com 12 s, contra "1I" na tabela.
+- **Ajustes do laboratório diferem da Tab. 4.13 em dois pontos:** ciclo de AQZ (E79 = 3, 50 só em SH0 e SH1, isto é, 2I+2T) e atraso do 50 de RL2 (0,02 s contra 0,03 s). RL2 também tinha E79 = 1 com 12 s, contra "1I" na tabela. (Revisto na seção 14: o ciclo de AQZ é o 1I+2T do TCC lido como religamentos.)
 - **Tempo de processamento do relé.** Nos relatórios, o GOOSE de trip sai de 10 a 16 ms depois do atraso ajustado e o de 50BF, de 8 a 13 ms depois do BFD. Sem esse atraso, o simulador ficava 13 a 14 ms abaixo nos intervalos trip → trip remoto. Com 13 ms (mediana), tempos de trip e intervalos ficam a até 12 ms dos medidos.
 - **Ensaio 5.7.3(a).** Com o atraso real de RL2 (0,02 s) e relés ideais, o 50BF chegaria a RS4 antes da curva 51, ao contrário do medido. O resultado do laboratório só é reproduzido com o tempo de processamento: o 50BF sai em 246 ms e a 51 atua em 232 ms (medido: 238 ms).
 - **Ensaios fase-terra.** Cinco relatórios monofásicos não descritos no texto do TCC foram reproduzidos. A mala injetou só as fases, e os elementos de neutro do SEL-751 medem o canal IN. Os tempos medidos só são coerentes com os elementos de fase: com o 51N ativo, 21I5 abriria em cerca de 200 ms no ensaio AQZ-RL1 sem 50BF, e não em 654 ms. Esses ensaios não validam a proteção de neutro.
@@ -215,3 +215,38 @@ A correção do alcance de 21I4 elimina a exceção relatada na seção 12.2: co
 - Fig. 4.6(d): IccFTm de 75,3 A na barra RS7, contra 75,6 A na Tab. 4.7.
 - Anexo B: a coluna "Ajuste 50/50N (s)" traz correntes, e os atrasos não são informados.
 - Tab. 4.8: Icc/FS = 509 A nos alimentadores da SE AQZ, acima do primário de 500 A escolhido.
+
+## 14. Quinta sessão: critério de religamento, gráficos do TCC e guia de uso
+
+**Pedido:** verificar o critério do autor para o ciclo do RL3 e se o "1I" foi usado nos resultados; verificar o que o TCC faz e o site não; verificar se há guia de uso passo a passo.
+
+### 14.1 Critério de religamento do autor
+
+| Fonte | O que diz |
+|---|---|
+| Tab. 4.11 e seção 4.7.1(d) (religadores da SE) | "um religamento instantâneo e dois temporizados", 50/50N "bloqueadas a partir do segundo religamento", tempo morto de 10 s |
+| Seção 5.3.2 | "AND (SH0 OR SH1)" no religador da SE, para bloquear o instantâneo "no segundo religamento" |
+| Tab. 4.12 e seção 4.7.1(e) (religadores de linha) | "3 instantâneos para o primeiro e 1 a menos para os próximos"; "uma atuação a menos que o religador protegido"; +1 s no tempo morto |
+| Seção 5.6.1 e Apêndice B | AQZ com "três religamentos", aberturas de 0,18, 0,17, 0,27 e 0,27 s (50, 50, 51, 51); RL1 com três aberturas e 11,5 s; RL2 com duas aberturas e 12,5 s |
+| Arquivo de ajustes do laboratório | E79 = 3 (AQZ), 2 (RL1), 1 (RL2) |
+| Seção 5.8 | "diminuição do número de religamentos para religadores em série" |
+| Planilha de cálculos | a coluna "Ciclo de Religamento" da tabela de ajustes está vazia; as abas "SE ESB" e "SE AGF" repetem 1I+2T e 10 s |
+| OAP 165/2013 e Anexo B (campo) | "1I-2T" com tempos mortos 10-10 s (três aberturas); RL3 grupo 2 com 2I |
+
+Conclusão: na Tab. 4.13 o ciclo dos religadores da SE conta religamentos (1I+2T = quatro aberturas, 50, 50, 51, 51) e o dos religadores de linha conta aberturas (3I = três aberturas). Com essa leitura, cada nível tem um religamento a menos que o anterior, como pedem o texto e a seção 5.8, e todos os ensaios conferem. A primeira versão do simulador lia 1I+2T como três aberturas; isso foi corrigido. O "1I" do RL3 alimentado por 21I5 é a única entrada que contraria o critério; nenhum resultado do TCC o usa (o ensaio de RL2 tem duas aberturas), e o simulador passou a usar 2I.
+
+### 14.2 Gráficos e funções do TCC que faltavam no site
+
+| Item do TCC | Antes | Agora |
+|---|---|---|
+| Figs. 4.9 a 4.13 (coordenogramas por alimentador) | só o caminho selecionado, uma grandeza por vez | seletor com as cinco figuras, fase e neutro juntos, nas cadeias da Fig. 4.6 |
+| Figs. A1 a A4 (resultado gráfico do ensaio de sobrecorrente) | só tabelas | gráfico I × t com a curva simulada e os pontos medidos |
+| Figs. 5.12 a 5.22 e 3.12 (telas do Sequenc e sequência de religamento) | registro de eventos e linha do tempo sem escala | diagrama de tempos em ms (eliminação) ou em s (ciclo completo), na aba Eventos e em cada ensaio |
+| Fig. 2.3 e Tab. 2.1 (famílias de curvas) | não havia | curvas IEC e IEEE com dial ajustável |
+| Fig. 3.13 (estados do religamento) | só os selos no diagrama | coluna 79 na tabela de ajustes (repouso, ciclo, bloqueio) |
+
+Itens do TCC que continuam fora: diagramas de lógica copiados do manual do SEL-751 (Figs. 3.5 e 3.8 a 3.11), cuja lógica o simulador executa sem desenhá-la; telas de configuração dos relés e da mala (Figs. 5.3 a 5.10, Apêndices D e E); formas de onda das correntes da mala; dimensionamento dos TCs como cálculo de projeto (a Tab. 4.8 é conferida, mas o tipo de TC não é escolhido pelo simulador).
+
+### 14.3 Guia de uso
+
+Não havia guia passo a passo: o README explicava como executar e o que o site faz, e a aba Falta tinha um parágrafo de instruções. Foram criados `docs/GUIA_DE_USO.md` (mapa da tela, função de cada aba, doze roteiros com o resultado esperado, mapa item do TCC → local no site e leitura dos resultados) e a aba **Guia** no site, com o mesmo conteúdo resumido.

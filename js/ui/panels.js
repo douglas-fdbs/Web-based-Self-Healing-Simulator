@@ -18,6 +18,7 @@
     { id: 'iec', label: 'IEC 61850' },
     { id: 'ensaios', label: 'Ensaios' },
     { id: 'fontes', label: 'Fontes' },
+    { id: 'guia', label: 'Guia' },
   ];
 
   const CAT_LABEL = {
@@ -35,6 +36,28 @@
       s.inst > 0 ? ` · 50 ${fmt.amp(s.inst, s.inst % 1 ? 1 : 0)} em ${fmt.ms((s.instDelay || 0) * 1000)}` : '');
   }
 
+  // Diagrama de tempos (estilo Sequenc) da última simulação
+  function timingBlock(app, res, compact) {
+    const model = app.model;
+    const swOf = {};
+    Object.values(model.switches).forEach((w) => { if (w.relay) swOf[w.relay] = w.id; });
+    const mode = compact ? 'transitorio' : (app.timingMode || 'transitorio');
+    const box = el('div', { class: 'chart' });
+    SH.ui.charts.timing(box, res, {
+      mode, label: (sw) => app.swLabel(sw), relayOfSw: (sw) => model.switches[sw] && model.switches[sw].relay, swOfRelay: (id) => swOf[id],
+    });
+    const chip = (c, t) => el('span', { class: 'small', style: { display: 'inline-flex', alignItems: 'center', gap: '4px', marginRight: '10px' } },
+      el('span', { style: { display: 'inline-block', width: '10px', height: '8px', borderRadius: '2px', background: c } }), t);
+    const legend = el('div', { class: 'small muted' }, chip('var(--fault)', 'corrente de falta'), chip('var(--muted)', 'partida'), chip('var(--goose-sl)', 'bloqueio recebido (GOOSE)'),
+      chip('var(--ink)', 'disjuntor fechado'), chip('var(--crit)', 'trip (ms)'), chip('var(--goose-bf)', '50BF'), chip('var(--ok)', 'fechamento'));
+    const toggle = compact ? null : el('div', { class: 'seg-toggle', role: 'group', 'aria-label': 'Janela do diagrama de tempos' },
+      el('button', { type: 'button', 'aria-pressed': mode === 'transitorio' ? 'true' : 'false', onclick: () => { app.timingMode = 'transitorio'; app.renderPanel(); } }, 'Eliminação (ms)'),
+      el('button', { type: 'button', 'aria-pressed': mode === 'completo' ? 'true' : 'false', onclick: () => { app.timingMode = 'completo'; app.renderPanel(); } }, 'Ciclo completo (s)'));
+    return el('div', { class: 'stack' },
+      el('span', { class: 'eyebrow', text: 'Diagrama de tempos (como no Sequenc, Figs. 5.12 a 5.22)' }),
+      toggle, box, legend);
+  }
+
   // ------------------------------------------------------------------ Falta
   function tabFalta(app, root) {
     const sel = app.sel;
@@ -44,7 +67,8 @@
         el('div', { class: 'stack' },
           el('span', { class: 'eyebrow', text: 'Como usar' }),
           el('h2', { text: 'Clique em um trecho do diagrama para aplicar uma falta' }),
-          el('p', { class: 'small muted', text: 'O ponto clicado define a posição da falta. Clique em um religador para ver ajustes, comandar ou simular falha de abertura; clique no barramento de uma subestação para simular sua perda. O esquema de proteção (convencional ou IEC 61850) e o self-healing ficam na barra superior.' })),
+          el('p', { class: 'small muted', text: 'O ponto clicado define a posição da falta. Clique em um religador para ver ajustes, comandar ou simular falha de abertura; clique no barramento de uma subestação para simular sua perda. O esquema de proteção (convencional ou IEC 61850) e o self-healing ficam na barra superior.' }),
+          el('button', { type: 'button', class: 'btn', onclick: () => app.setTab('guia') }, 'Abrir o guia passo a passo')),
         el('div', { class: 'stack' },
           el('span', { class: 'eyebrow', text: 'Cenários prontos' }),
           el('div', { class: 'examples' }, SH.labs.examples.map((ex) => el('button', {
@@ -200,6 +224,7 @@
       const ok = await SH.ui.copyText(csv, ta);
       copyBtn.textContent = ok ? 'CSV copiado' : 'Selecione e copie abaixo';
     });
+    root.append(timingBlock(app, res, false));
     root.append(el('div', { class: 'row' },
       el('label', { class: 'switch', for: 'logMinor' }, showMinor, 'Análise do SRA'),
       el('label', { class: 'switch', for: 'logPick' }, hidePickup, 'Ocultar partidas'),
@@ -342,21 +367,49 @@
     } else if (app.result && app.result.faultInfo) {
       faultI = kind === 'phase' ? app.result.faultInfo.phase : app.result.faultInfo.residual;
     }
-    const kindToggle = el('div', { class: 'seg-toggle', role: 'group', 'aria-label': 'Grandeza do coordenograma' },
-      el('button', { type: 'button', 'aria-pressed': kind === 'phase' ? 'true' : 'false', onclick: () => { app.chartKind = 'phase'; app.renderPanel(); } }, 'Fase'),
-      el('button', { type: 'button', 'aria-pressed': kind === 'ground' ? 'true' : 'false', onclick: () => { app.chartKind = 'ground'; app.renderPanel(); } }, 'Neutro'));
-    const chart = el('div', { class: 'chart' });
-    const legend = el('div', { class: 'row small' });
-    root.append(el('div', { class: 'stack' },
-      el('span', { class: 'eyebrow', text: 'Coordenograma do caminho selecionado' }),
-      el('div', { class: 'row' }, kindToggle,
-        el('span', { class: 'small muted', text: faultI > 0 ? `marcador: falta de ${fmt.amp(faultI)}` : 'selecione um trecho para marcar a corrente de falta' })),
-      chart, legend));
-    if (devs.length) {
-      SH.ui.charts.coordinogram(chart, devs, { kind, faultI, Mmax: app.options.Mmax });
-      devs.forEach((d, i) => legend.append(el('span', { class: 'chip', style: { color: SH.ui.charts.CURVE_COLORS[i % 6], borderColor: SH.ui.charts.CURVE_COLORS[i % 6] }, text: d.label })));
+    // coordenogramas: caminho selecionado ou figuras do TCC (Figs. 4.9 a 4.13)
+    const chains = model.scn.coordination || [];
+    const FIGS = chains.length ? [
+      ['path', 'Caminho selecionado (topologia atual)'],
+      ['21I7', 'Fig. 4.9: alimentador 21I7 (AQ7)'], ['21I6', 'Fig. 4.10: alimentador 21I6 (AQ6)'],
+      ['21I5', 'Fig. 4.11: alimentador 21I5 (AQ5)'], ['21I4', 'Fig. 4.12: alimentador 21I4 (AQ4)'],
+      ['bus', 'Fig. 4.13: 21In e 01Zn (barra)'],
+    ] : [['path', 'Caminho selecionado (topologia atual)']];
+    const fig = FIGS.some(([k]) => k === app.coordFig) ? app.coordFig : 'path';
+    const figSel = el('select', { id: 'coordFig', 'aria-label': 'Coordenograma' }, FIGS.map(([k, t]) => el('option', { value: k, selected: k === fig ? true : null, text: t })));
+    figSel.addEventListener('change', () => { app.coordFig = figSel.value; app.renderPanel(); });
+    const colors = SH.ui.charts.CURVE_COLORS;
+    const legendOf = (list) => el('div', { class: 'row small' }, list.map((d, i) => el('span', { class: 'chip', style: { color: colors[i % colors.length], borderColor: colors[i % colors.length] }, text: d.label })));
+    if (fig === 'path') {
+      const kindToggle = el('div', { class: 'seg-toggle', role: 'group', 'aria-label': 'Grandeza do coordenograma' },
+        el('button', { type: 'button', 'aria-pressed': kind === 'phase' ? 'true' : 'false', onclick: () => { app.chartKind = 'phase'; app.renderPanel(); } }, 'Fase'),
+        el('button', { type: 'button', 'aria-pressed': kind === 'ground' ? 'true' : 'false', onclick: () => { app.chartKind = 'ground'; app.renderPanel(); } }, 'Neutro'));
+      const chart = el('div', { class: 'chart' });
+      root.append(el('div', { class: 'stack' },
+        el('span', { class: 'eyebrow', text: 'Coordenograma' }), figSel,
+        el('div', { class: 'row' }, kindToggle,
+          el('span', { class: 'small muted', text: faultI > 0 ? `marcador: falta de ${fmt.amp(faultI)}` : 'selecione um trecho para marcar a corrente de falta' })),
+        chart, devs.length ? legendOf(devs) : null));
+      if (devs.length) SH.ui.charts.coordinogram(chart, devs, { kind, faultI, Mmax: app.options.Mmax });
+      else chart.append(el('p', { class: 'muted small', text: 'Nenhum dispositivo de proteção energizado no caminho.' }));
     } else {
-      chart.append(el('p', { class: 'muted small', text: 'Nenhum dispositivo de proteção energizado no caminho.' }));
+      // cadeia de alcance máximo da Fig. 4.6, com o grupo de ajuste correspondente
+      const ch = chains.find((c) => c.id === (fig === 'bus' ? '21I5' : fig));
+      const stF = N.normalState(model);
+      Object.entries(ch.state || {}).forEach(([k, v]) => { stF.sw[k].closed = v; });
+      const topoF = N.analyze(model, stF);
+      const mk = (sw) => { const w = model.switches[sw]; const cfg = model.relays[w.relay]; return { sw, label: w.label || sw, cfg, group: PR.selectGroup(cfg, topoF.sw[sw].up, null), inst50: true }; };
+      const list = fig === 'bus' ? [mk('01Z2'), mk('21I5')] : ch.devices.map((d) => mk(d.dev));
+      const cP = el('div', { class: 'chart' });
+      const cN = el('div', { class: 'chart' });
+      root.append(el('div', { class: 'stack' },
+        el('span', { class: 'eyebrow', text: 'Coordenograma' }), figSel,
+        el('p', { class: 'small muted', text: fig === 'bus'
+          ? 'Como a Fig. 4.13 do TCC: alimentador (21In, aqui 21I5) e proteção geral de barra (01Zn), com o 50 da Tab. 4.13. No esquema convencional esse 50 fica bloqueado (seção 3.3.2).'
+          : 'Como a figura do TCC: relés da cadeia de alcance máximo da Fig. 4.6, com os ajustes do conjunto ativo e o grupo correspondente ao sentido de alimentação.' }),
+        el('span', { class: 'small', text: 'Fase' }), cP, el('span', { class: 'small', text: 'Neutro' }), cN, legendOf(list)));
+      SH.ui.charts.coordinogram(cP, list, { kind: 'phase', Mmax: app.options.Mmax });
+      SH.ui.charts.coordinogram(cN, list, { kind: 'ground', Mmax: app.options.Mmax });
     }
 
     // tabela de ajustes
@@ -377,7 +430,8 @@
         el('td', { text: P.inst ? `${fmt.num(P.inst, 0)} / ${fmt.num((P.instDelay || 0) * 1000, 0)}` : '-' }),
         el('td', { text: `${fmt.num(Ng.pickup, Ng.pickup % 1 ? 1 : 0)} / ${fmt.num(Ng.dial, 2)}` }),
         el('td', { text: Ng.inst ? `${fmt.num(Ng.inst, 0)} / ${fmt.num((Ng.instDelay || 0) * 1000, 0)}` : '-' }),
-        el('td', { text: cfg.groups.length > 1 ? g.id : '' }));
+        el('td', { text: cfg.groups.length > 1 ? g.id : '' }),
+        el('td', { text: !r ? '' : r.lockout ? 'bloqueio' : r.shot > 0 || r.reclosingAt ? `ciclo ${r.shot}/${Math.max(0, r.ops - 1)}` : 'repouso' }));
       return tr;
     });
     const sets = model.scn.settingsSets || {};
@@ -389,12 +443,13 @@
       el('span', { class: 'eyebrow', text: `Ajustes: ${app.settingsSetLabel()}` }),
       setToggle,
       setIds.length && app.settingsSet !== 'base' && sets[app.settingsSet] ? el('div', { class: 'callout warn', text: `Conjunto extra, para comparação: ${sets[app.settingsSet].note}` }) : null,
-      el('p', { class: 'small muted', text: '51: pickup (A) / dial e curva; 50: pickup (A) / atraso (ms). Clique em uma linha para editar o grupo ativo. "planilha": relé fora da Tab. 4.13, com ajustes da planilha de cálculos do autor.' }),
+      el('p', { class: 'small muted', text: '51: pickup (A) / dial e curva; 50: pickup (A) / atraso (ms). Clique em uma linha para editar o grupo ativo. "planilha": relé fora da Tab. 4.13, com ajustes da planilha de cálculos do autor. Ciclo: nos religadores da SE conta religamentos (1I+2T = aberturas 50, 50, 51, 51); nos de linha, aberturas (3I = três aberturas).' }),
       el('div', { class: 'table-wrap' }, el('table', {},
-        el('thead', {}, el('tr', {}, ['Relé', 'RTC', 'Ciclo', '51P', '50P', '51N', '50N', 'Grupo'].map((h, i) => el('th', { class: i === 0 ? 'l' : '', text: h })))),
+        el('thead', {}, el('tr', {}, ['Relé', 'RTC', 'Ciclo', '51P', '50P', '51N', '50N', 'Grupo', '79'].map((h, i) => el('th', { class: i === 0 ? 'l' : '', text: h })))),
         el('tbody', {}, rows)))));
     if (app.editRelay) root.append(editForm(app, app.editRelay));
     if (model.scn.coordination && SH.coordination) root.append(criteriaSection(app));
+    root.append(curveFamilies(app));
 
     // parâmetros da simulação
     const o = app.options;
@@ -417,6 +472,26 @@
         num('optVmin', 'Tensão mínima (pu)', o.vmin, 0.01, (v) => { o.vmin = v; app.saveOptions(); })),
       el('label', { class: 'switch', for: 'optVolt' }, chkV, 'Exigir tensão mínima na recomposição'),
       el('button', { type: 'button', class: 'btn', onclick: () => app.resetSettings() }, 'Restaurar ajustes e parâmetros originais')));
+  }
+
+  // Famílias de curvas de tempo inverso (Fig. 2.3 e Tab. 2.1 do TCC)
+  function curveFamilies(app) {
+    const open = !!app.famOpen;
+    const box = el('div', { class: 'stack' },
+      el('span', { class: 'eyebrow', text: 'Famílias de curvas (Fig. 2.3 e Tab. 2.1)' }),
+      el('button', { type: 'button', class: 'btn', onclick: () => { app.famOpen = !open; app.renderPanel(); } }, open ? 'Ocultar curvas' : 'Mostrar curvas IEC e IEEE'));
+    if (!open) return box;
+    const dial = app.famDial || 1;
+    const inp = el('input', { type: 'number', id: 'famDial', step: 0.05, min: 0.05, value: dial, style: { width: '100%' } });
+    inp.addEventListener('change', () => { const v = Number(inp.value); if (v > 0) { app.famDial = v; app.renderPanel(); } });
+    const list = Object.entries(PR.CURVES).filter(([k]) => k !== 'VI').map(([k, c]) => ({ label: c.name, group: { phase: { pickup: 1, dial, curve: k } } }));
+    const chart = el('div', { class: 'chart' });
+    const colors = SH.ui.charts.CURVE_COLORS;
+    box.append(el('label', { class: 'field', for: 'famDial' }, el('span', { text: 'Dial (TD)' }), inp), chart,
+      el('div', { class: 'row small' }, list.map((d, i) => el('span', { class: 'chip', style: { color: colors[i % colors.length], borderColor: colors[i % colors.length] }, text: d.label }))),
+      el('p', { class: 'small muted', text: 't = TD · (β / (M^α − 1) + L), com M limitado a 30 como no restante do simulador. IEEE moderadamente inversa com os coeficientes da IEEE C37.112 (a Tab. 2.1 imprime α = 2 e L = 0,18).' }));
+    SH.ui.charts.coordinogram(chart, list, { kind: 'phase', Mmax: app.options.Mmax, xmin: 1, xmax: 100, xLabel: 'Múltiplo do pickup (M = I / Ipickup)' });
+    return box;
   }
 
   // Verificação dos critérios de coordenação e sensibilidade (seção 4.7.1 do TCC)
@@ -584,6 +659,9 @@
         const st = r.set;
         ocCard.append(el('p', { class: 'small', style: { margin: '10px 0 4px' } }, el('strong', { text: `${r.id} (${app.swLabel(r.dev)})` }),
           ` · ${st.curve === 'NI' ? 'IEC NI' : 'IEC MI'}, dial ${fmt.num(st.dial, 2)}, pickup ${fmt.num(st.pickup, 2)} A; 50 em ${fmt.num(st.inst, 2)} A com ${fmt.ms(st.instDelay * 1000, 0)} · ${r.ref}`));
+        const itBox = el('div', { class: 'chart' });
+        SH.ui.charts.itChart(itBox, { time: (I) => SH.labs.overcurrentTime(st, I), pickup: st.pickup, inst: st.inst, points: r.points });
+        ocCard.append(itBox, el('p', { class: 'small muted', text: `Como a Fig. ${{ AQZ_MT: 'A1', AQZ: 'A2', RL1: 'A3', RL2: 'A4' }[r.id]} do TCC: curva simulada (azul), pickups do 51 e do 50 (verde tracejado) e pontos medidos (verde: aprovado na mala; vermelho: reprovado).` }));
         ocCard.append(el('div', { class: 'table-wrap' }, el('table', {},
           el('thead', {}, el('tr', {}, ['I (A)', 'El.', 'Medido', 'Simul.', 'Dif.', 'Mala'].map((h) => el('th', { text: h })))),
           el('tbody', {}, r.points.map(([I, t, status]) => {
@@ -614,6 +692,7 @@
             const meas = typeof m.lab === 'number' ? fv(m.lab) : (m.labText || '-');
             return el('tr', {}, el('td', { class: 'l', style: { whiteSpace: 'normal' }, text: m.label }), el('td', { class: 'l', text: m.tcc }), el('td', { style: typeof m.lab === 'number' ? null : { whiteSpace: 'normal' }, text: meas }), el('td', { text: txt }));
           })))));
+        if (app.result && app.result.test && app.result.test.id === t.id) card.append(timingBlock(app, app.result, true));
       }
       root.append(card);
     });
@@ -649,6 +728,33 @@
       el('p', { class: 'small muted', text: 'Metodologia e validação detalhadas: pasta docs/ do repositório.' }));
   }
 
-  const RENDER = { falta: tabFalta, eventos: tabEventos, analises: tabAnalises, protecao: tabProtecao, iec: tabIec, ensaios: tabEnsaios, fontes: tabFontes };
+  // ------------------------------------------------------------------ Guia
+  function tabGuia(app, root) {
+    const G = SH.guide;
+    if (!G) return;
+    root.append(el('div', { class: 'stack' },
+      el('span', { class: 'eyebrow', text: 'Guia de uso' }),
+      el('h2', { text: 'Como usar o simulador' }),
+      el('p', { class: 'small', text: G.intro }),
+      el('ul', { class: 'small', style: { margin: 0, paddingLeft: '18px' } }, G.screen.map(([k, v]) => el('li', {}, el('strong', { text: `${k}: ` }), v)))));
+    root.append(el('span', { class: 'eyebrow', text: 'Roteiros passo a passo' }));
+    G.routes.forEach((r) => {
+      root.append(el('div', { class: 'test-card' },
+        el('h3', { text: r.title }),
+        el('ol', { class: 'small', style: { margin: '4px 0', paddingLeft: '18px' } }, r.steps.map((t) => el('li', { text: t }))),
+        el('p', { class: 'small' }, el('strong', { text: 'Resultado: ' }), r.result)));
+    });
+    root.append(el('div', { class: 'stack' },
+      el('span', { class: 'eyebrow', text: 'Onde está cada item do TCC' }),
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', { class: 'l', text: 'Item do TCC' }), el('th', { class: 'l', text: 'Onde ver' }))),
+        el('tbody', {}, G.map.map(([a, b]) => el('tr', {}, el('td', { class: 'l', style: { whiteSpace: 'normal' }, text: a }), el('td', { class: 'l', style: { whiteSpace: 'normal' }, text: b }))))))));
+    root.append(el('div', { class: 'stack' },
+      el('span', { class: 'eyebrow', text: 'Como ler os resultados' }),
+      el('ul', { class: 'small', style: { margin: 0, paddingLeft: '18px' } }, G.reading.map((t) => el('li', { text: t }))),
+      el('p', { class: 'small muted', text: 'Versão completa: docs/GUIA_DE_USO.md no repositório.' })));
+  }
+
+  const RENDER = { falta: tabFalta, eventos: tabEventos, analises: tabAnalises, protecao: tabProtecao, iec: tabIec, ensaios: tabEnsaios, fontes: tabFontes, guia: tabGuia };
   SH.ui.panels = { TABS, RENDER, pathDevices };
 })(typeof window !== 'undefined' ? window : globalThis);

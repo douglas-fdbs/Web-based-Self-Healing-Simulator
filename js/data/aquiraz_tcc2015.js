@@ -33,9 +33,14 @@
   const J_SUM = J_LEN.T7 + J_LEN.T10 + J_LEN.T11;
   const jLoad = (id) => Math.round((J_TOTAL * J_LEN[id] / J_SUM) * 100) / 100;
 
+  // Ciclo dos religadores da SE: o TCC conta religamentos ("um religamento
+  // instantâneo e dois temporizados", Tab. 4.11; 50 bloqueado a partir do segundo
+  // religamento, seções 4.7.1 e 5.3.2): 1I+2T = aberturas 50, 50, 51, 51 (E79 = 3),
+  // como no relé ensaiado (Apêndice B). A OAP de campo usa a mesma grafia para 3 aberturas.
   const feederSettings = (assumed) => ({
     rtc: 500,
     cycle: '1I+2T',
+    cycleNotation: 'religamentos',
     deadTime: 10,
     groups: one(P(570, 0.23, 2850, 0.10), P(26, 0.43, 2850, 0.10)),
     ref: assumed ? undefined : 'Tab. 4.13',
@@ -143,13 +148,16 @@
       RL1: { rtc: 300, cycle: '2I', deadTime: 12, groups: one(P(461.7, 0.05, 1899, 0.03), P(22, 0.15, 240, 0.03)), ref: 'Tab. 4.13' },
       RL2: { rtc: 300, cycle: '2I', deadTime: 12, groups: one(P(315, 0.05, 1241.7, 0.03), P(22, 0.15, 240, 0.03)), ref: 'Tab. 4.13' },
       RL3: {
-        rtc: 300, cycle: '1I', deadTime: 13, ref: 'Tab. 4.13 (dois grupos)',
+        rtc: 300, cycle: '1I', deadTime: 13, ref: 'Tab. 4.13 (dois grupos); ciclo do grupo 2 pelo critério da Tab. 4.12 e pelo Apêndice B',
         groups: [
           // grupo 1: alimentado por 21I6, isto é, energizado pelo lado de T10 (terminal RL3b)
           // tempo morto pelo critério da Tab. 4.12 (+1 s por nível): 3º nível depois de 21I6 (13 s)
           { id: 'G1', name: 'Grupo 1, alimentado por 21I6 (lado T10)', when: { upstreamNode: 'RL3b' }, deadTime: 13, phase: P(284, 0.05, 858.3, 0.02), ground: P(20, 0.05, 120, 0.02) },
-          // grupo 2: alimentado por 21I5, energizado pelo lado de T9 (terminal RL3a); 2º nível (12 s)
-          { id: 'G2', name: 'Grupo 2, alimentado por 21I5 (lado T9)', when: { upstreamNode: 'RL3a' }, deadTime: 12, phase: P(284, 0.05, 1267.8, 0.03), ground: P(22, 0.05, 240, 0.03) },
+          // grupo 2: alimentado por 21I5, energizado pelo lado de T9 (terminal RL3a); 2º nível (12 s).
+          // A Tab. 4.13 imprime "1I", mas o critério do autor (Tab. 4.12: uma abertura a menos que
+          // RS4, que tem 3I), o relé ensaiado (E79 = 1, Apêndice B: duas aberturas) e o Anexo B
+          // dão 2I. Nenhum resultado do TCC usa "1I" para este grupo.
+          { id: 'G2', name: 'Grupo 2, alimentado por 21I5 (lado T9)', when: { upstreamNode: 'RL3a' }, cycle: '2I', deadTime: 12, phase: P(284, 0.05, 1267.8, 0.03), ground: P(22, 0.05, 240, 0.03) },
         ],
       },
       RL4: { rtc: 300, cycle: '1I', deadTime: 13, groups: one(P(416, 0.05, 1057, 0.02), P(20, 0.05, 120, 0.02)), ref: 'Tab. 4.13' },
@@ -161,19 +169,19 @@
       // (51, 50, 51N, 50N e função 79: ciclo 1I+2T e tempo morto de 10 s, o mesmo
       // critério da Tab. 4.11) e "Dimensionamento TC e TP" (RTC).
       '21S7': {
-        rtc: 500, cycle: '1I+2T', deadTime: 10,
+        rtc: 500, cycle: '1I+2T', cycleNotation: 'religamentos', deadTime: 10,
         groups: one(P(570, 0.20, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
         ref: 'Planilha do TCC, abas "SE ESB" e "Dimensionamento TC e TP"; ciclo pela Tab. 4.11',
         origin: 'planilha',
       },
       '21S1': {
-        rtc: 500, cycle: '1I+2T', deadTime: 10,
+        rtc: 500, cycle: '1I+2T', cycleNotation: 'religamentos', deadTime: 10,
         groups: one(P(570, 0.20, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
         ref: 'Planilha do TCC, abas "SE ESB" e "Dimensionamento TC e TP"; ciclo pela Tab. 4.11',
         origin: 'planilha',
       },
       '21I2': {
-        rtc: 300, cycle: '1I+2T', deadTime: 10,
+        rtc: 300, cycle: '1I+2T', cycleNotation: 'religamentos', deadTime: 10,
         groups: one(P(570, 0.14, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
         ref: 'Planilha do TCC, abas "SE AGF" e "Dimensionamento TC e TP"; ciclo pela Tab. 4.11',
         origin: 'planilha',
@@ -380,12 +388,12 @@
       { kind: 'divergencia', text: 'Fig. 4.2 indica T9 = 3.664 m, mas a Tab. 4.5 soma 4.114 m (3.173 + 941), valor coerente com a impedância da Tab. 4.6. O simulador usa a Tab. 4.5.' },
       { kind: 'divergencia', text: 'Fig. 4.6(c) indica Icc2F = 972,7 A na barra RL2 (21I5); a Tab. 4.7 e a relação √3/2·Icc3F dão 907,7 A.' },
       { kind: 'divergencia', text: 'Fig. 4.6(d) indica IccFTm = 75,3 A na barra RS7; a Tab. 4.7 dá 75,6 A, valor que o simulador reproduz.' },
-      { kind: 'divergencia', text: 'RL3 alimentado por 21I5 (grupo 2): a Tab. 4.13 dá ciclo "1I" (sem religamento), mas o critério da Tab. 4.12 (um instantâneo a menos que o religador protegido, RS4 com 3I) leva a "2I", que é também o valor do Anexo B (campo) e do relé ensaiado (E79 = 1). O simulador segue a Tab. 4.13 na base e o Anexo B no conjunto extra.' },
+      { kind: 'divergencia', text: 'RL3 alimentado por 21I5 (grupo 2): a Tab. 4.13 imprime "1I" (sem religamento), igual ao grupo 1. O critério do autor (Tab. 4.12: uma abertura a menos que RS4, que tem 3I), o relé ensaiado (E79 = 1; Apêndice B: duas aberturas, tempo morto de 12 s) e o Anexo B dão "2I". Nenhum resultado do TCC usa "1I" para esse grupo; o simulador usa "2I".' },
       { kind: 'divergencia', text: 'Planilha de cálculos, aba "SE AQZ": 50/50N da proteção geral de barra em 4.707 A e 5.090 A e dial do 51N em 0,356; a Tab. 4.13 e o relé ensaiado usam 4.079 A (50% do curto bifásico) e dial 0,30. O simulador usa a Tab. 4.13.' },
       { kind: 'divergencia', text: 'Anexo B: a coluna "Ajuste 50/50N (s)" traz correntes em ampères (por exemplo 5000 e 3500), e não tempos. Os atrasos do 50/50N não são informados.' },
       { kind: 'divergencia', text: 'Tab. 4.8: nos alimentadores da SE AQZ, Icc/FS = 509 A supera o primário do TC escolhido (500 A) em 1,8%.' },
-      { kind: 'divergencia', text: 'Ciclo "1I+2T" (Tab. 4.13 e OAP 165/2013 de campo, com tempo morto 10-10 s e rearme de 45 s) versus o laboratório: o arquivo de ajustes do SEL-751 usado nos ensaios tem E79 = 3 e 50P1TC com "AND (SH0 OR SH1)", isto é, 2 operações instantâneas e 2 temporizadas. O preset do ensaio 5.6.1 reproduz a versão do laboratório.' },
-      { kind: 'divergencia', text: 'RL2 do laboratório (RL3 no campo) foi ensaiado com 50P1D = 0,02 s e E79 = 1 (tempo morto 12 s), contra 0,03 s e "1I" (sem religamento) na Tab. 4.13. Os presets dos ensaios 5.7.3 usam o valor do laboratório.' },
+      { kind: 'premissa', text: 'Ciclo de religamento pelo critério do autor. Nos religadores da SE o TCC conta religamentos: "1I+2T" é "um religamento instantâneo e dois temporizados" (Tab. 4.11), com o 50 bloqueado a partir do segundo religamento (seções 4.7.1 e 5.3.2), isto é, aberturas 50, 50, 51 e 51 (E79 = 3). É a configuração do relé ensaiado (Apêndice B: três religamentos). Nos religadores de linha a notação conta aberturas ("3I" = três aberturas, E79 = 2 no ensaio de RL1). Assim cada nível tem um religamento a menos que o anterior, como pedem a Tab. 4.12 e a seção 5.8. A OAP 165/2013 de campo usa a mesma grafia "1I-2T" para três aberturas (tempos mortos 10-10 s); o Anexo B foi lido dessa forma.' },
+      { kind: 'divergencia', text: 'RL2 do laboratório (RL3 no campo, grupo 2) foi ensaiado com 50P1D = 0,02 s, contra 0,03 s na Tab. 4.13. Os presets dos ensaios 5.7.3 usam o valor do laboratório.' },
       { kind: 'divergencia', text: 'Planilha de cálculos: os pickups de neutro dos religadores de linha (65,1 A, 71,1 A, 54 A) seguem um critério anterior; a Tab. 4.13 e os relés ensaiados usam 20 a 24 A. Os dials de neutro da planilha coincidem com a Tab. 4.13.' },
       { kind: 'divergencia', text: 'Os ajustes de RL3 (Tab. 4.13) e a maioria das tabelas referem-se à topologia de alcance máximo (Fig. 4.6), em que os religadores de linha são alimentados pela SE AQZ.' },
     ],

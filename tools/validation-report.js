@@ -136,7 +136,7 @@ p('## 6. Ensaios do Capítulo 5 do TCC contra os relatórios da mala de testes')
 p();
 p('Os valores "Medido" vêm dos relatórios do Sequenc (mala Conprove CE-6006, out/2015) da pasta ARTIGO_REI: instantes das transições GOOSE (GI) menos os 100 ms de pré-falta, ou intervalo entre duas transições. As correntes injetadas confirmam os pontos de falta usados (9.419 A, 10.176 A, 4.715 A, 3.309 A e 2.145 A primários).');
 p();
-p(`Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos ensaios quando diferem da Tab. 4.13 (ciclo 2I+2T de AQZ, atraso de 0,02 s no 50 de RL2), disjuntor de 50 ms (atraso programado na mala), GOOSE de 3 ms e tempo de processamento do relé de ${nf(SH.labs.LAB_DELAY * 1000, 0)} ms nos elementos 50/50N e no 50BF. Esse valor é a mediana do atraso entre o tempo ajustado e o GOOSE de trip nos ensaios trifásicos (10 a 16 ms; no 50BF, 8 a 13 ms).`);
+p(`Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos ensaios quando diferem da Tab. 4.13 (atraso de 0,02 s no 50 de RL2; os ciclos de religamento do laboratório coincidem com os da base, lida pelo critério do autor), disjuntor de 50 ms (atraso programado na mala), GOOSE de 3 ms e tempo de processamento do relé de ${nf(SH.labs.LAB_DELAY * 1000, 0)} ms nos elementos 50/50N e no 50BF. Esse valor é a mediana do atraso entre o tempo ajustado e o GOOSE de trip nos ensaios trifásicos (10 a 16 ms; no 50BF, 8 a 13 ms).`);
 p();
 p('| Ensaio | Medida | TCC (texto) | Medido | Simulado | Diferença |');
 p('|---|---|---|---:|---:|---:|');

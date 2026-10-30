@@ -36,6 +36,14 @@ test('ciclo de religamento: notação do TCC', () => {
   assert.deepEqual(PR.parseCycle('1I+2T'), ['I', 'T', 'T']);
   assert.deepEqual(PR.parseCycle('3I'), ['I', 'I', 'I']);
   assert.deepEqual(PR.parseCycle('Bloqueado'), ['I']);
+  // religadores da SE: o TCC conta religamentos (Tab. 4.11), como no relé ensaiado
+  assert.deepEqual(PR.parseCycle('1I+2T', 'religamentos'), ['I', 'I', 'T', 'T']);
+  const r = SH.scenarios.tcc2015.relays;
+  assert.deepEqual(PR.opsOf(r['21I5'], r['21I5'].groups[0]), ['I', 'I', 'T', 'T']);
+  // critério do autor: um religamento a menos por nível (21I5 3, RS4 2, RL3 alimentado por 21I5 1)
+  assert.equal(PR.opsOf(r.RS4, r.RS4.groups[0]).length - 1, 2);
+  assert.equal(PR.opsOf(r.RL3, r.RL3.groups[1]).length - 1, 1);
+  assert.equal(PR.opsOf(r.RL3, r.RL3.groups[0]).length - 1, 0);
 });
 
 test('TCC Tab. 4.6: impedância dos trechos a partir dos cabos (Tab. 4.4 x Tab. 4.5)', () => {
@@ -91,7 +99,7 @@ test('operação normal sem sobrecarga e sem malha (as duas topologias)', () => 
 
 test('TCC Fig. 4.3: falta permanente em T1 -> 21I7 bloqueia, SRA abre RS1 e fecha RL1', () => {
   const res = SH.simulator.run(tcc, { script: faultScript('T1') });
-  assert.equal(res.log.filter((e) => e.cat === 'trip' && e.dev === '21I7').length, 3); // 1I+2T
+  assert.equal(res.log.filter((e) => e.cat === 'trip' && e.dev === '21I7').length, 4); // 1I+2T: 50, 50, 51, 51
   assert.ok(res.log.some((e) => e.cat === 'bloqueio' && e.dev === '21I7'));
   assert.deepEqual(sraActions(res), ['abre RS1', 'fecha RL1']);
   assert.equal(res.finalState.sw.RL1.closed, true);
@@ -211,8 +219,10 @@ test('Ensaio 5.6.2 (Apêndice B): AQZ abre na 1ª e na 2ª falta, RL1 bloqueia e
   assert.equal(m(0), 2);
   assert.equal(m(1), 3);
   assert.equal(m(2), 'fechado');
-  // com o ciclo da Tab. 4.13 (1I+2T), AQZ abriria só na primeira falta, como diz o texto do TCC
-  assert.equal(lab('r2', { cycleOverrides: {} }).m(0), 1);
+  // a base (Tab. 4.13 lida pelo critério do autor) já reproduz o ensaio sem ajuste de laboratório
+  assert.equal(lab('r2', { cycleOverrides: {}, deadOverrides: {} }).m(0), 2);
+  // lendo 1I+2T como na OAP de campo (3 aberturas), AQZ abriria só na primeira falta, como diz o texto da seção 5.6.2
+  assert.equal(lab('r2', { cycleOverrides: { '21I5': ['I', 'T', 'T'] } }).m(0), 1);
 });
 
 test('Fig. 3.8: sem GOOSE de bloqueio, a supervisão da qualidade inibe o 50 de AQZ_MT', () => {

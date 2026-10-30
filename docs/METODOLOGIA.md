@@ -6,7 +6,7 @@ Este documento descreve os modelos implementados, as equações usadas e as prem
 
 A base é a que o TCC documenta como final: topologia da Fig. 4.2 e ajustes da Tab. 4.13. Os relés fora da Tab. 4.13 (21S7, 21S1, 21I2 e RS7) usam os cálculos do autor na planilha do TCC. No esquema convencional, o 50/50N da proteção geral de barra fica bloqueado (seção 3.3.2). Ficam como extras, selecionáveis e identificados na interface: a Fig. 4.1 (Nobre, 2013), os ajustes de campo do Anexo B e os ajustes do laboratório, estes só nos presets de ensaio.
 
-Cada grupo de ajuste pode ter ciclo e tempo morto próprios. Isso é necessário para o RL3: na base, os tempos mortos seguem o nível na cadeia (13 s alimentado por 21I6 e 12 s por 21I5); no Anexo B, os ciclos também diferem (1I e 2I).
+Cada grupo de ajuste pode ter ciclo e tempo morto próprios. Isso é necessário para o RL3: alimentado por 21I6 ele é o terceiro nível (1I, 13 s) e alimentado por 21I5, o segundo (2I, 12 s).
 
 ## 1. Modelo da rede
 
@@ -56,9 +56,18 @@ Rede radial, cargas como correntes constantes iguais à carga pesada de cada tre
 
 ### 4.2 Religamento (79)
 
-A notação do TCC é lida como sequência de operações até o bloqueio: `1I+2T` significa três operações, a primeira com o 50/50N habilitado e as duas seguintes temporizadas; `3I` são três operações instantâneas. O número de religamentos é o número de operações menos um. O tempo morto é o da Tab. 4.11/4.12 (10 s nos religadores da SE, mais 1 s a cada nível a jusante). Depois de um religamento bem-sucedido, o contador rearma após 45 s (79RSD da OAP 165/2013 da SE AQZ e do relé AQZ ensaiado). Trip remoto por 50BF leva direto ao bloqueio.
+O ciclo segue o critério do autor, que usa duas grafias na Tab. 4.13:
 
-**Divergência na fonte.** O arquivo de ajustes do SEL-751 usado nos ensaios (E79 = 3 e torque control "AND (SH0 OR SH1)" no 50P1) indica duas operações instantâneas e duas temporizadas, diferente do `1I+2T` da Tab. 4.13. A OAP 165/2013 de campo confirma `1I-2T` para 21I5 (tempo morto 10-10 s). O simulador usa a Tab. 4.13 por padrão e o preset do ensaio usa a configuração do laboratório.
+| Relés | Como o TCC conta | Exemplo | Aberturas | Religamentos |
+|---|---|---|---|---:|
+| Religadores da SE (21In, 21S7, 21S1, 21I2) | religamentos depois da primeira abertura, que é sempre instantânea ("um religamento instantâneo e dois temporizados", Tab. 4.11) | `1I+2T` | 50, 50, 51, 51 | 3 |
+| Religadores de linha | aberturas ("3 instantâneos para o primeiro e 1 a menos para os próximos", Tab. 4.12) | `3I`, `2I`, `1I` | 3, 2 e 1 aberturas pelo 50 | 2, 1 e 0 |
+
+Evidências: o texto bloqueia o 50 da SE "a partir do segundo religamento" (seções 4.7.1 e 5.3.2, torque control "AND (SH0 OR SH1)"); o ensaio 5.6.1 relata "três religamentos" com as duas últimas aberturas temporizadas; o arquivo de ajustes do laboratório tem E79 = 3 em AQZ, 2 em RL1 e 1 em RL2; e a seção 5.8 conclui pela "diminuição do número de religamentos para religadores em série". Com essa leitura, cada nível tem um religamento a menos que o anterior (SE 3, primeiro religador de linha 2, segundo 1, terceiro 0). A OAP de campo usa a grafia `1I-2T` para três aberturas (tempos mortos 10-10 s), e o Anexo B, que vem dela, é lido assim.
+
+A única exceção na Tab. 4.13 é o RL3 alimentado por 21I5 (grupo 2), impresso como `1I`. Pelo critério ele é o segundo nível depois de 21I5 (RS4 com 3I) e teria `2I`, valor usado no relé ensaiado (Apêndice B: duas aberturas, 12 s) e no Anexo B. Nenhum resultado do TCC usa `1I` para esse grupo, e o simulador usa `2I`.
+
+O tempo morto é o da Tab. 4.11/4.12 (10 s nos religadores da SE, mais 1 s a cada nível a jusante). Depois de um religamento bem-sucedido, o contador rearma após 45 s (79RSD da OAP 165/2013 e do relé AQZ ensaiado; o TCC não informa). Trip remoto por 50BF leva direto ao bloqueio.
 
 ### 4.3 Grupos de ajuste (SIAP)
 
@@ -79,7 +88,7 @@ Os disjuntores secundários 01Z1 e 01Z2 são modelados como um equivalente únic
 
 ### 5.1 Ensaios de laboratório
 
-Os presets da aba *Ensaios* reproduzem o laboratório e não a Tab. 4.13 quando as duas diferem. Os ajustes vêm do arquivo do AcSELerator (`SDMT_Aquiraz Settings.rdb`, set 1 dos relés AQZ_MT, AQZ, RL1 e RL2): ciclo 2I+2T em AQZ e atraso de 0,02 s no 50 de RL2 (0,03 s na Tab. 4.13). Os demais ajustes do arquivo conferem com a Tab. 4.13, salvo o arredondamento dos valores secundários (por exemplo 51N de 21I5 com 0,05 A × 500 = 25 A, contra 26 A).
+Os presets da aba *Ensaios* reproduzem o laboratório e não a Tab. 4.13 quando as duas diferem. Os ajustes vêm do arquivo do AcSELerator (`SDMT_Aquiraz Settings.rdb`, set 1 dos relés AQZ_MT, AQZ, RL1 e RL2): atraso de 0,02 s no 50 de RL2 (0,03 s na Tab. 4.13); os ciclos (E79 = 3, 2 e 1 em AQZ, RL1 e RL2) coincidem com a base lida pelo critério do autor (seção 4.2). Os demais ajustes do arquivo conferem com a Tab. 4.13, salvo o arredondamento dos valores secundários (por exemplo 51N de 21I5 com 0,05 A × 500 = 25 A, contra 26 A).
 
 Nos relatórios fase-terra, a mala injetou só as correntes de fase (I1 a I3 em um relé e I4 a I6 no outro). No SEL-751, os elementos 50N/51N usam o canal IN, que ficou sem corrente. Os tempos medidos só são reproduzidos com os elementos de neutro fora de serviço (opção `groundElements: false`), por isso esses ensaios validam os elementos de fase com corrente monofásica e não a proteção de neutro.
 
