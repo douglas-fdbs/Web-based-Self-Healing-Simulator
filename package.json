@@ -1,0 +1,11 @@
+{
+  "name": "web-based-self-healing-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Simulador web didático de proteção e self-healing da rede de distribuição de Aquiraz (IEC 61850)",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build:standalone": "node tools/build-standalone.js"
+  },
+  "license": "MIT"
+}
