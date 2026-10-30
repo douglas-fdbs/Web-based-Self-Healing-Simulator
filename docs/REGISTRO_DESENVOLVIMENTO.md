@@ -1,6 +1,6 @@
 # Registro do desenvolvimento assistido por IA (Equipe 3, Claude)
 
-Registro factual das sessões de desenvolvimento, para subsidiar a comparação com o simulador da Equipe 2 (Gemini) no artigo. As seções 1 a 10 tratam da primeira sessão; a seção 11, da revisão feita com a pasta ARTIGO_REI.
+Registro factual das sessões de desenvolvimento, para subsidiar a comparação com o simulador da Equipe 2 (Gemini) no artigo. As seções 1 a 10 tratam da primeira sessão; a seção 11, da revisão feita com a pasta ARTIGO_REI; a seção 12, da auditoria de cobertura contra o TCC.
 
 ## 1. Contexto
 
@@ -129,3 +129,49 @@ Arquivos que o conector do Drive não conseguiu baixar (acima de cerca de 6 MB):
 | Curtos da planilha (42 barras, AQZ, ESB e AGF) | maior erro 0,0098% |
 | Tempos de trip e intervalos entre GOOSEs (16 ensaios) | a até 12 ms dos medidos (exceto um trip 50P perto do pickup, 9 ms acima) |
 | Eliminação da falta | 6 a 23 ms antes do pós-falta da mala, diferença atribuída à recepção do GOOSE pela mala |
+
+## 12. Terceira sessão: auditoria de cobertura contra o TCC
+
+**Pedido:** verificar se o simulador reproduz tudo o que o TCC defende, o que falta e se a simulação é satisfatória.
+
+### 12.1 Método
+
+1. Leitura do sumário, das listas de figuras e tabelas, dos capítulos 3 a 6 e dos Apêndices A a E e Anexos A e B, item por item contra o simulador.
+2. Varredura de faltas: 16 trechos × 3 posições × 4 tipos × 2 esquemas na configuração normal (384 casos), nas quatro configurações de alcance máximo da Fig. 4.6 (3 esquemas) e na topologia de Nobre (360 casos), verificando eliminação da falta, paralelismo entre fontes, sobrecarga e seletividade da primeira atuação.
+
+### 12.2 Resultado da varredura
+
+- Nenhum caso terminou com falta alimentada, fontes em paralelo ou trecho sobrecarregado.
+- Na configuração normal, só dois pares atuam sem seletividade no esquema convencional: 21I5 com RS4 (faltas no início de T9) e RS5 com RS6 (faltas fase-terra em T14). Nas configurações de alcance máximo aparecem também RS1 com RL1, RL2 com RS2 e RL3 com RS4. São os pontos críticos da seção 4.7.3 do TCC e a "alta sensibilidade das proteções de neutro" da seção 4.8.
+- Com o 50 da barra habilitado sem seletividade lógica, AQZ_MT abre junto com o alimentador em faltas próximas da SE (primeiro ponto crítico do TCC).
+- Com a solução final do TCC (seletividade lógica no 50 e no 51, retaguarda de 200 ms e 50BF), todas as faltas na configuração normal são eliminadas só pelo relé mais próximo. A única exceção nas configurações de alcance máximo é RS7 alimentado no sentido inverso por 21I4 (faltas em T16), fora do estudo do TCC, porque RS7 só tem ajuste para o sentido AGF → AQZ.
+
+### 12.3 Lacunas encontradas e corrigidas
+
+| Item do TCC | Antes | Agora |
+|---|---|---|
+| Seção 5.5 e Apêndice A (ensaios de sobrecorrente) | não reproduzidos | 40 pontos I × t: curvas a até 1,7%, tempo definido a até 10 ms |
+| Apêndice B (religamentos) | só comparação qualitativa; RL1 e RL2 isolados ausentes | AQZ, RL1, RL2 e AQZ + RL1 com número e tipo de aberturas e intervalo trip → religamento iguais aos medidos |
+| Fig. 3.8 (qualidade da mensagem) | perda do GOOSE de bloqueio fazia o 50 a montante atuar | opção `slQuality`: o 50 a montante fica bloqueado, como na lógica do TCC |
+| Seções 4.7.1 e 4.7.3 (critérios e pontos críticos) | só o coordenograma visual | verificação automática de margens e sensibilidade nas cadeias da Fig. 4.6 |
+| Tab. 2.1 (curvas IEEE) | só curvas IEC | curvas IEEE MI, VI e EI |
+
+### 12.4 Divergências do próprio TCC encontradas nesta sessão
+
+- **Seção 5.6.2 x Apêndice B.** O texto diz que AQZ "não mais atuou durante as faltas subsequentes"; a tabela de GOOSEs registra trip de AQZ também na segunda falta (12,28 s), coerente com o 50 habilitado em SH0 e SH1.
+- **Seção 5.5 x Apêndice A.** O texto diz que todas as atuações ficaram dentro da margem; as tabelas marcam "Reprov." em quatro pontos de tempo definido de RL1, cinco de RL2 e no pickup do 51 de RL1 e RL2. Nos pontos de tempo definido, a causa é o processamento do relé (13 a 20 ms), que a janela de ±10% da mala não comporta. No pickup do 51, a rampa registra o instante do trip temporizado em vez da partida.
+- **Tab. 2.1.** A curva IEEE moderadamente inversa aparece com α = 2 e L = 0,18; a IEEE C37.112 dá α = 0,02 e L = 0,114.
+- **Sensibilidade.** Pelo critério da seção 4.7.1(a), RS5 (2,32) e RL4 (2,03) ficam abaixo do múltiplo 2,4 de fase com o curto bifásico na barra remota.
+- **Texto x arquivo de ajustes.** A seção 5.3.2 cita 52ABF = Y e REMTRIP = VB002; o arquivo `SDMT_Aquiraz Settings.rdb` (salvo em 27/09/2015, antes dos ensaios) tem 52ABF = N e REMTRIP = VB001 AND NOT VB002.
+
+### 12.5 O que continua fora do simulador
+
+| Item | Motivo |
+|---|---|
+| Ajustes de campo do Anexo B como conjunto alternativo | o Anexo B não informa os atrasos dos elementos 50; seria preciso adotá-los |
+| Dimensionamento dos TCs (Tab. 4.8) | verificação de projeto, não muda a simulação |
+| Proteções diferencial (87) e de linha (R3 a R5) da SE AQZ, funções 51NS, 46 e condutor partido | fora da Tab. 4.13 e dos ensaios |
+| Coordenação de sequência (79SEQ), rearme após bloqueio (79RSLD) e supervisão de religamento (79CLS) | não usados nos ensaios; o bloqueio só termina por comando ou pelo SRA |
+| Rede Ethernet redundante (Fig. 3.4b) | a perda de mensagens é simulada como total ou nula |
+| Capacidade dos transformadores na recomposição | o TCC não usa esse critério e faltam dados de ESB e AGF e dos três alimentadores de AQZ fora da rede inteligente |
+| Detecção mais lenta do 50 perto do pickup e recepção do GOOSE pela mala | diferenças de 6 a 23 ms nos tempos de eliminação e de 9 ms em um trip |

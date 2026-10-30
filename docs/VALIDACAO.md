@@ -117,12 +117,17 @@ Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos en
 
 | Ensaio | Medida | TCC (texto) | Medido | Simulado | Diferença |
 |---|---|---|---:|---:|---:|
-| Seção 5.6.1: Religamento de um IED (AQZ = 21I5) | Número de aberturas do 21I5 | 4 (três religamentos) | - | 4 |  |
-|  | 1ª abertura (50P, atraso 100 ms) | ≈ 100 ms | - | 113,0 ms |  |
-|  | Últimas aberturas, tempo após o religamento (51P) | 200 ms | - | 200,0 ms |  |
-| Seção 5.6.2: Religamento de dois IEDs (AQZ + RL1) | Aberturas de 21I5 | 1 (só na primeira falta) | - | 1 |  |
-|  | Aberturas de RS4 (RL1) | ciclo completo até bloquear | - | 3 |  |
-|  | Estado final de 21I5 | fechado, suprindo T8 | - | fechado |  |
+| Seção 5.6.1: Religamento de um IED (AQZ = 21I5) | Número de aberturas do 21I5 | 4 (três religamentos) | 4 | 4 |  |
+|  | Elemento de cada abertura | 50, 50, 51, 51 | 50, 50, 51, 51 (faltas de 0,18/0,17/0,27/0,27 s) | 50, 50, 51, 51 |  |
+|  | Trip → religamento | 10 s | 10,51 s | 10,50 s | -10 ms |
+| Apêndice B: Religamento de um IED (RL1 = RS4) | Número de aberturas de RS4 | - | 3 | 3 |  |
+|  | Elemento de cada abertura | - | 50, 50, 50 (faltas de 0,133 s) | 50, 50, 50 |  |
+|  | Trip → religamento | - | 11,51 s | 11,50 s | -10 ms |
+| Apêndice B: Religamento de um IED (RL2 = RL3) | Número de aberturas de RL3 | - | 2 | 2 |  |
+|  | Trip → religamento | - | 12,50 s | 12,50 s | +0 ms |
+| Seção 5.6.2: Religamento de dois IEDs (AQZ + RL1) | Aberturas de 21I5 | 1 (só na primeira falta) | 2 (1ª e 2ª faltas) | 2 |  |
+|  | Aberturas de RS4 (RL1) | ciclo completo até bloquear | 3 | 3 |  |
+|  | Estado final de 21I5 | fechado, suprindo T8 | fechado | fechado |  |
 | Seção 5.7.1(a): Seletividade lógica + 50BF (trifásico) | Trip 50P de 21I5 após a falta | - | 115,2 ms | 113,0 ms | -2,2 ms |
 |  | Trip de 21I5 → trip de AQZ_MT | 217 ms | 216,5 ms | 216,0 ms | -0,5 ms |
 |  | Eliminação da falta¹ | ≈ 400 ms | 400,0 ms | 379,0 ms | -21,0 ms |
@@ -161,6 +166,57 @@ Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos en
 
 ¹ No relatório, a eliminação é o início do estado pós-falta da mala, que avança 50 ms (atraso programado) depois de receber o GOOSE de trip; a recepção acrescenta de 7 a 21 ms. No simulador, é o trip mais os 50 ms de abertura do disjuntor.
 
+### 6.1 Sobrecorrente (seção 5.5 e Apêndice A)
+
+Pontos I × t dos quatro relés, com os ajustes secundários do relé ensaiado. O simulado usa as equações do motor (curva IEC limitada a M = 30 e tempo definido com 13 ms de processamento).
+
+| Relé | I (A sec.) | Elemento | Medido | Simulado | Diferença | Status na mala |
+|---|---:|---|---:|---:|---:|---|
+| AQZ_MT | 2,0 | 51 | 2.650,0 ms | 2.639,4 ms | -10,6 ms | Aprov. |
+|  | 2,5 | 51 | 1.850,0 ms | 1.850,8 ms | +0,8 ms | Aprov. |
+|  | 3,0 | 51 | 1.490,0 ms | 1.486,4 ms | -3,6 ms | Aprov. |
+|  | 4,0 | 51 | 1.130,0 ms | 1.132,9 ms | +2,9 ms | Aprov. |
+|  | 5,0 | 51 | 960,0 ms | 955,6 ms | -4,4 ms | Aprov. |
+|  | 6,0 | 50 | 123,0 ms | 113,0 ms | -10,0 ms | Aprov. |
+|  | 7,0 | 50 | 121,0 ms | 113,0 ms | -8,0 ms | Aprov. |
+|  | 8,0 | 50 | 119,0 ms | 113,0 ms | -6,0 ms | Aprov. |
+|  | 9,0 | 50 | 116,0 ms | 113,0 ms | -3,0 ms | Aprov. |
+|  | 10,0 | 50 | 116,0 ms | 113,0 ms | -3,0 ms | Aprov. |
+| AQZ | 2,0 | 51 | 4.120,0 ms | 4.115,9 ms | -4,1 ms | Aprov. |
+|  | 2,5 | 51 | 2.610,0 ms | 2.602,7 ms | -7,3 ms | Aprov. |
+|  | 3,0 | 51 | 1.910,0 ms | 1.903,1 ms | -6,9 ms | Aprov. |
+|  | 4,0 | 51 | 1.240,0 ms | 1.237,7 ms | -2,3 ms | Aprov. |
+|  | 5,0 | 51 | 922,0 ms | 917,0 ms | -5,0 ms | Aprov. |
+|  | 6,0 | 50 | 123,0 ms | 113,0 ms | -10,0 ms | Aprov. |
+|  | 7,0 | 50 | 122,0 ms | 113,0 ms | -9,0 ms | Aprov. |
+|  | 8,0 | 50 | 119,0 ms | 113,0 ms | -6,0 ms | Aprov. |
+|  | 9,0 | 50 | 117,0 ms | 113,0 ms | -4,0 ms | Aprov. |
+|  | 10,0 | 50 | 118,0 ms | 113,0 ms | -5,0 ms | Aprov. |
+| RL1 | 2,0 | 51 | 1.500,0 ms | 1.492,1 ms | -7,9 ms | Aprov. |
+|  | 2,5 | 51 | 980,0 ms | 977,6 ms | -2,4 ms | Aprov. |
+|  | 3,0 | 51 | 730,0 ms | 726,9 ms | -3,1 ms | Aprov. |
+|  | 4,0 | 51 | 489,0 ms | 480,5 ms | -8,5 ms | Aprov. |
+|  | 5,0 | 51 | 361,0 ms | 358,9 ms | -2,1 ms | Aprov. |
+|  | 9,5 | 50 | 69,0 ms | 63,0 ms | -6,0 ms | Aprov. |
+|  | 11,0 | 50 | 68,4 ms | 63,0 ms | -5,4 ms | Reprov. |
+|  | 12,0 | 50 | 66,2 ms | 63,0 ms | -3,2 ms | Reprov. |
+|  | 13,0 | 50 | 62,8 ms | 63,0 ms | +0,2 ms | Reprov. |
+|  | 14,0 | 50 | 64,6 ms | 63,0 ms | -1,6 ms | Reprov. |
+| RL2 | 2,0 | 51 | 614,0 ms | 610,7 ms | -3,3 ms | Aprov. |
+|  | 2,5 | 51 | 417,0 ms | 413,7 ms | -3,3 ms | Aprov. |
+|  | 3,0 | 51 | 312,0 ms | 312,8 ms | +0,8 ms | Aprov. |
+|  | 3,5 | 51 | 255,0 ms | 251,5 ms | -3,5 ms | Aprov. |
+|  | 4,0 | 51 | 212,0 ms | 210,2 ms | -1,8 ms | Aprov. |
+|  | 5,0 | 50 | 40,5 ms | 33,0 ms | -7,5 ms | Reprov. |
+|  | 6,0 | 50 | 36,0 ms | 33,0 ms | -3,0 ms | Reprov. |
+|  | 7,0 | 50 | 35,2 ms | 33,0 ms | -2,2 ms | Reprov. |
+|  | 8,0 | 50 | 34,3 ms | 33,0 ms | -1,3 ms | Reprov. |
+|  | 9,0 | 50 | 32,7 ms | 33,0 ms | +0,3 ms | Reprov. |
+
+Maior erro nos pontos de curva: **1,74%**. Maior diferença nos pontos de tempo definido: **10,0 ms**.
+
+Os pontos "Reprov." de tempo definido (RL1 e RL2) ficaram fora da janela de ±10% configurada na mala porque ela não considera o processamento do relé (13 a 20 ms além do ajuste, o mesmo efeito medido nos ensaios com GOOSE). O pickup do 51 medido com rampa ficou 21% a 48% acima do ajuste em todos os relés, e "Reprov." em RL1 e RL2: com corrente crescente, a rampa registra o instante do trip temporizado, e não o da partida. O texto do TCC afirma que todas as atuações ficaram dentro da margem; as tabelas do Apêndice A não confirmam isso.
+
 Leitura:
 
 - Tempos de trip e intervalos entre GOOSEs ficam a até 12 ms dos medidos. A exceção é o trip de RS4 no ensaio monofásico com 50BF (medido 9 ms acima do simulado), em que a corrente fica só 24% acima do pickup do 50P e a detecção é mais lenta.
@@ -168,4 +224,45 @@ Leitura:
 - No ensaio 5.7.3(a), com o atraso real de RL2 (0,02 s), o modelo ideal faria o 50BF chegar a RS4 antes da curva 51 (trip remoto em 223 ms contra 232 ms), ao contrário do medido. Com o processamento calibrado o 50BF sai em 246 ms e a 51 vence, como no laboratório (238 ms contra 246 ms).
 - Nos ensaios monofásicos a mala injetou só as fases. Os tempos medidos só são reproduzidos com os elementos de neutro fora de serviço: com o 51N de 21I5 (25 A, dial 0,43, MI) ativo, o ensaio AQZ-RL1 sem 50BF terminaria em cerca de 200 ms, e não em 654 ms. Esses relatórios validam os elementos de fase com corrente monofásica, não a proteção de neutro.
 - O texto do TCC cita 204 ms para o ensaio 5.7.3(b); o relatório desse ensaio registra 214 ms, e 204,8 ms é o valor do ensaio 5.7.3(a).
+
+## 7. Critérios de coordenação e sensibilidade (seção 4.7.1) e pontos críticos (seção 4.7.3)
+
+Verificação estática nas cadeias de alcance máximo da Fig. 4.6 (módulo `js/core/coordination.js`), com falta trifásica e fase-terra na barra de cada relé a jusante e no fim da zona dele. "Descoordenado" = margem menor que a abertura do disjuntor (50 ms); critério = 0,4 s entre barra e alimentador (Tab. 4.9) e 0,3 s ao longo do alimentador.
+
+| Esquema | Pares descoordenados | Pares abaixo do critério | Pares verificados |
+|---|---:|---:|---:|
+| Convencional (50 da barra bloqueado, Anexo B) | 17 | 16 | 52 |
+| 50 da barra habilitado, sem seletividade lógica | 25 | 16 | 52 |
+| Seletividade lógica (bloqueio do 50) | 2 | 30 | 52 |
+| Seletividade lógica estendida ao 51 + retaguarda de 200 ms (solução do TCC) | 0 | 17 | 52 |
+
+Pontos críticos citados no TCC e o que a verificação encontra:
+
+1. Barra x alimentador (01Zn e 21In), com o 50 da barra habilitado: 3F 9.420 A: jusante 100 ms, montante 100 ms (descoordenado).
+2. 21I5 x RS4: 3F 4.715 A: jusante 50 ms, montante 100 ms (descoordenado).
+3. RS1 x RL1: 3F 1.816 A: jusante 230 ms, montante 266 ms (descoordenado).
+
+A maior parte das faltas fase-terra fica descoordenada no esquema convencional porque os 50N dos religadores de linha têm atrasos de 10 a 30 ms uns sobre os outros, menores que a abertura do disjuntor. É a mesma conclusão da seção 4.8 do TCC ("alta sensibilidade das proteções de sobrecorrente de neutro").
+
+Sensibilidade (múltiplo do pickup na primeira barra remota, 2F para fase e FT para neutro):
+
+| Relé | Barra remota | M fase | M neutro |
+|---|---|---:|---:|
+| 21I7 | barra RS1 | 3,98 | 62,3 |
+| RS1 | barra RL1 | 3,77 | 56,2 |
+| RL1 | barra RS3 | 3,41 | 48,9 |
+| RS3 | barra ESB | 3,45 | 42,7 |
+| 21I6 | barra RS2 | 3,91 | 61,0 |
+| RS2 | barra RL2 | 3,50 | 51,8 |
+| RL2 | barra RL3 | 2,84 | 28,2 |
+| RL3 | barra RS4 | 2,48 | 24,3 |
+| 21I5 | barra RS4 | 7,16 | 127,3 |
+| RS4 | barra RL3 | 5,90 | 55,7 |
+| RL3 | barra RL2 | 3,20 | 29,2 |
+| 21I4 | barra RS5 | 2,46 | 36,8 |
+| RS5 | barra RS6 | 2,32 (< 2,4) | 33,4 |
+| RS6 | barra RL4 | 2,58 | 36,4 |
+| RL4 | barra RS7 | 2,03 (< 2,4) | 28,0 |
+
+RS5 e RL4 ficam abaixo do múltiplo 2,4 de fase para o curto bifásico na barra remota. O TCC não informa qual curto usa no critério; com o trifásico, RS5 passa (2,68) e RL4 continua abaixo (2,35).
 

@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..', 'js');
-['core/complex', 'core/network', 'core/shortcircuit', 'core/protection', 'core/selfhealing', 'core/simulator',
+['core/complex', 'core/network', 'core/shortcircuit', 'core/protection', 'core/selfhealing', 'core/simulator', 'core/coordination',
   'data/aquiraz_tcc2015', 'data/aquiraz_nobre2013', 'data/lab_tests'].forEach((f) => require(path.join(root, `${f}.js`)));
 const SH = globalThis.SH;
 const N = SH.network;
@@ -144,14 +144,34 @@ SH.labs.tests.forEach((t) => {
   const res = SH.simulator.run(tcc, SH.labs.buildInput(tcc, t));
   t.measures.forEach((m, i) => {
     const v = SH.labs.measure(res, m);
-    const txt = typeof v === 'number' ? (m.unit === 'ms' ? `${nf(v, 1)} ms` : nf(v, 0)) : String(v);
-    const meas = typeof m.lab === 'number' ? `${nf(m.lab, 1)} ms` : (m.labText || '-');
-    const diff = typeof m.lab === 'number' && typeof v === 'number' ? `${v - m.lab >= 0 ? '+' : ''}${nf(v - m.lab, 1)} ms` : '';
+    const fv = (x) => (m.unit === 'ms' ? `${nf(x, 1)} ms` : m.unit === 's' ? `${nf(x, 2)} s` : nf(x, 0));
+    const txt = typeof v === 'number' ? fv(v) : String(v);
+    const meas = typeof m.lab === 'number' ? fv(m.lab) : (m.labText || '-');
+    const d = typeof m.lab === 'number' && typeof v === 'number' ? v - m.lab : null;
+    const diff = d == null ? '' : (m.unit === 's' ? `${d >= 0 ? '+' : ''}${nf(d * 1000, 0)} ms` : `${d >= 0 ? '+' : ''}${nf(d, 1)} ms`);
     p(`| ${i === 0 ? `${t.ref.split(';')[0].split(',')[0]}: ${t.title}` : ''} | ${m.label} | ${m.tcc} | ${meas} | ${txt} | ${diff} |`);
   });
 });
 p();
 p(SH.labs.CLEAR_NOTE);
+p();
+p('### 6.1 Sobrecorrente (seção 5.5 e Apêndice A)');
+p();
+p(`Pontos I × t dos quatro relés, com os ajustes secundários do relé ensaiado. O simulado usa as equações do motor (curva IEC limitada a M = 30 e tempo definido com ${nf(SH.labs.LAB_DELAY * 1000, 0)} ms de processamento).`);
+p();
+p('| Relé | I (A sec.) | Elemento | Medido | Simulado | Diferença | Status na mala |');
+p('|---|---:|---|---:|---:|---:|---|');
+let w51 = 0;
+let w50 = 0;
+SH.labs.overcurrent.forEach((r) => r.points.forEach(([I, t, st], i) => {
+  const sim = SH.labs.overcurrentTime(r.set, I);
+  if (sim.el === '51') w51 = Math.max(w51, Math.abs((sim.t - t) / t) * 100); else w50 = Math.max(w50, Math.abs(sim.t - t) * 1000);
+  p(`| ${i === 0 ? r.id : ''} | ${nf(I, 1)} | ${sim.el} | ${nf(t * 1000, 1)} ms | ${nf(sim.t * 1000, 1)} ms | ${sim.t - t >= 0 ? '+' : ''}${nf((sim.t - t) * 1000, 1)} ms | ${st} |`);
+}));
+p();
+p(`Maior erro nos pontos de curva: **${nf(w51, 2)}%**. Maior diferença nos pontos de tempo definido: **${nf(w50, 1)} ms**.`);
+p();
+p(SH.labs.OVERCURRENT_NOTE);
 p();
 p('Leitura:');
 p();
@@ -160,6 +180,43 @@ p('- Sem o tempo de processamento, os intervalos trip → trip remoto ficariam 1
 p('- No ensaio 5.7.3(a), com o atraso real de RL2 (0,02 s), o modelo ideal faria o 50BF chegar a RS4 antes da curva 51 (trip remoto em 223 ms contra 232 ms), ao contrário do medido. Com o processamento calibrado o 50BF sai em 246 ms e a 51 vence, como no laboratório (238 ms contra 246 ms).');
 p('- Nos ensaios monofásicos a mala injetou só as fases. Os tempos medidos só são reproduzidos com os elementos de neutro fora de serviço: com o 51N de 21I5 (25 A, dial 0,43, MI) ativo, o ensaio AQZ-RL1 sem 50BF terminaria em cerca de 200 ms, e não em 654 ms. Esses relatórios validam os elementos de fase com corrente monofásica, não a proteção de neutro.');
 p('- O texto do TCC cita 204 ms para o ensaio 5.7.3(b); o relatório desse ensaio registra 214 ms, e 204,8 ms é o valor do ensaio 5.7.3(a).');
+p();
+// ---------------------------------------------------------------- Critérios
+p('## 7. Critérios de coordenação e sensibilidade (seção 4.7.1) e pontos críticos (seção 4.7.3)');
+p();
+p('Verificação estática nas cadeias de alcance máximo da Fig. 4.6 (módulo `js/core/coordination.js`), com falta trifásica e fase-terra na barra de cada relé a jusante e no fim da zona dele. "Descoordenado" = margem menor que a abertura do disjuntor (50 ms); critério = 0,4 s entre barra e alimentador (Tab. 4.9) e 0,3 s ao longo do alimentador.');
+p();
+const schemesC = [
+  ['Convencional (50 da barra bloqueado, Anexo B)', {}],
+  ['50 da barra habilitado, sem seletividade lógica', { busInst50: true }],
+  ['Seletividade lógica (bloqueio do 50)', { sl: true, busInst50: true }],
+  ['Seletividade lógica estendida ao 51 + retaguarda de 200 ms (solução do TCC)', { sl: true, busInst50: true, slBlocks51: true }],
+];
+p('| Esquema | Pares descoordenados | Pares abaixo do critério | Pares verificados |');
+p('|---|---:|---:|---:|');
+schemesC.forEach(([name, o]) => {
+  const r = SH.coordination.check(tcc, o);
+  p(`| ${name} | ${r.pairs.filter((x) => x.status === 'descoordenado').length} | ${r.pairs.filter((x) => x.status === 'abaixo do critério').length} | ${r.pairs.length} |`);
+});
+p();
+p('Pontos críticos citados no TCC e o que a verificação encontra:');
+p();
+const conv = SH.coordination.check(tcc, { busInst50: true });
+const find = (u, d, w) => conv.pairs.filter((x) => x.up === u && x.down === d && (!w || x.where.startsWith(w)));
+const fmtP = (x) => `${x.fault} ${nf(x.I, 0)} A: jusante ${nf(x.tDown * 1000, 0)} ms, montante ${nf(x.tUp * 1000, 0)} ms (${x.status})`;
+p(`1. Barra x alimentador (01Zn e 21In), com o 50 da barra habilitado: ${fmtP(find('01Z2', '21I5')[0])}.`);
+p(`2. 21I5 x RS4: ${fmtP(find('21I5', 'RS4', 'barra')[0])}.`);
+p(`3. RS1 x RL1: ${fmtP(find('RS1', 'RL1', 'fim')[0])}.`);
+p();
+p('A maior parte das faltas fase-terra fica descoordenada no esquema convencional porque os 50N dos religadores de linha têm atrasos de 10 a 30 ms uns sobre os outros, menores que a abertura do disjuntor. É a mesma conclusão da seção 4.8 do TCC ("alta sensibilidade das proteções de sobrecorrente de neutro").');
+p();
+p('Sensibilidade (múltiplo do pickup na primeira barra remota, 2F para fase e FT para neutro):');
+p();
+p('| Relé | Barra remota | M fase | M neutro |');
+p('|---|---|---:|---:|');
+conv.sensitivity.forEach((x) => p(`| ${x.dev} | ${x.remote} | ${nf(x.mPhase, 2)}${x.okPhase ? '' : ' (< 2,4)'} | ${nf(x.mGround, 1)}${x.okGround ? '' : ' (< 4,0)'} |`));
+p();
+p('RS5 e RL4 ficam abaixo do múltiplo 2,4 de fase para o curto bifásico na barra remota. O TCC não informa qual curto usa no critério; com o trifásico, RS5 passa (2,68) e RL4 continua abaixo (2,35).');
 p();
 fs.writeFileSync(path.join(__dirname, '..', 'docs', 'VALIDACAO.md'), `${out.join('\n')}\n`);
 console.log(`docs/VALIDACAO.md gerado (${out.length} linhas).`);

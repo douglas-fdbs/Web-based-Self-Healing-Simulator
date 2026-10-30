@@ -9,8 +9,8 @@
  *   79         religamento automático com contagem de tentativas
  *   50BF       falha de disjuntor (tratada no simulador)
  *
- * Curva de tempo inverso (Eq. 2.2 do TCC, padrão IEC 60255):
- *   t = TD · β / (M^α − 1),  M = I / Ipickup
+ * Curva de tempo inverso (Eq. 2.2 e Tab. 2.1 do TCC, IEC 60255 e IEEE C37.112):
+ *   t = TD · (β / (M^α − 1) + L),  M = I / Ipickup  (L = 0 nas curvas IEC)
  * O múltiplo M é limitado a Mmax (30 por padrão). Os coordenogramas do TCC
  * (Figs. 4.9 a 4.13) mostram a curva 51N achatada a partir de M ≈ 30, o que
  * é coerente com essa limitação.
@@ -25,14 +25,19 @@
     VI: { name: 'IEC Muito Inversa', beta: 13.5, alpha: 1 },
     EI: { name: 'IEC Extremamente Inversa', beta: 80, alpha: 2 },
     LI: { name: 'IEC Inversa Longa', beta: 120, alpha: 1 },
+    // IEEE C37.112 (Tab. 2.1 do TCC). Na tabela do TCC a curva moderadamente
+    // inversa aparece com α = 2 e L = 0,18; os valores da norma são 0,02 e 0,114.
+    IEEE_MI: { name: 'IEEE Moderadamente Inversa', beta: 0.0515, alpha: 0.02, L: 0.114 },
+    IEEE_VI: { name: 'IEEE Muito Inversa', beta: 19.61, alpha: 2, L: 0.491 },
+    IEEE_EI: { name: 'IEEE Extremamente Inversa', beta: 28.2, alpha: 2, L: 0.1217 },
   };
 
-  /** Tempo de operação (s) de uma curva IEC; Infinity se não houver partida. */
+  /** Tempo de operação (s): t = TD · (β / (M^α − 1) + L); Infinity se não houver partida. */
   function curveTime(curve, dial, M, Mmax = 30) {
     if (!(M > 1)) return Infinity;
     const c = CURVES[curve] || CURVES.MI;
     const m = Math.min(M, Mmax);
-    return (dial * c.beta) / (Math.pow(m, c.alpha) - 1);
+    return dial * (c.beta / (Math.pow(m, c.alpha) - 1) + (c.L || 0));
   }
 
   /**

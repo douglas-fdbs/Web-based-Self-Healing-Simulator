@@ -269,6 +269,24 @@
       ],
     },
 
+    // Cadeias de alcance máximo da Fig. 4.6, usadas na verificação dos critérios
+    // de coordenação (seção 4.7.1) e nos coordenogramas das Figs. 4.9 a 4.13.
+    // "at" = trechos da fonte até a barra do relé; "end" = barra remota do último relé.
+    coordination: [
+      { id: '21I7', source: 'AQZ', state: { RL1: true, '21S7': false }, bus: { dev: '01Z2' },
+        devices: [{ dev: '21I7', at: [] }, { dev: 'RS1', at: ['T1'] }, { dev: 'RL1', at: ['T1', 'T2'] }, { dev: 'RS3', at: ['T1', 'T2', 'T3'] }],
+        end: ['T1', 'T2', 'T3', 'T4'], endLabel: 'barra ESB' },
+      { id: '21I6', source: 'AQZ', state: { RL2: true, '21S1': false, RL3: true, RS4: false }, bus: { dev: '01Z2' },
+        devices: [{ dev: '21I6', at: [] }, { dev: 'RS2', at: ['T5'] }, { dev: 'RL2', at: ['T5', 'T6'] }, { dev: 'RL3', at: ['T5', 'T6', 'T7', 'T10'] }],
+        end: ['T5', 'T6', 'T7', 'T10', 'T9'], endLabel: 'barra RS4' },
+      { id: '21I5', source: 'AQZ', state: { RL3: true, '21S1': false }, bus: { dev: '01Z2' },
+        devices: [{ dev: '21I5', at: [] }, { dev: 'RS4', at: ['T8'] }, { dev: 'RL3', at: ['T8', 'T9'] }],
+        end: ['T8', 'T9', 'T10', 'T7'], endLabel: 'barra RL2' },
+      { id: '21I4', source: 'AQZ', state: { RL4: true, '21I2': false }, bus: { dev: '01Z2' },
+        devices: [{ dev: '21I4', at: [] }, { dev: 'RS5', at: ['T12'] }, { dev: 'RS6', at: ['T12', 'T13'] }, { dev: 'RL4', at: ['T12', 'T13', 'T14'] }],
+        end: ['T12', 'T13', 'T14', 'T15'], endLabel: 'barra RS7' },
+    ],
+
     // Premissas e divergências encontradas na fonte (exibidas na aba "Fontes")
     notes: [
       { kind: 'premissa', text: 'Carga de T7, T10 e T11: a Tab. 4.2 informa apenas o total (155 A); o rateio foi feito proporcionalmente ao comprimento.' },

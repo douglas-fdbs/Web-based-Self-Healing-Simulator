@@ -372,6 +372,7 @@
         el('thead', {}, el('tr', {}, ['Relé', 'RTC', 'Ciclo', '51P', '50P', '51N', '50N', 'Grupo'].map((h, i) => el('th', { class: i === 0 ? 'l' : '', text: h })))),
         el('tbody', {}, rows)))));
     if (app.editRelay) root.append(editForm(app, app.editRelay));
+    if (model.scn.coordination && SH.coordination) root.append(criteriaSection(app));
 
     // parâmetros da simulação
     const o = app.options;
@@ -396,6 +397,41 @@
       el('button', { type: 'button', class: 'btn', onclick: () => app.resetSettings() }, 'Restaurar ajustes e parâmetros originais')));
   }
 
+  // Verificação dos critérios de coordenação e sensibilidade (seção 4.7.1 do TCC)
+  function criteriaSection(app) {
+    const o = app.options;
+    const res = SH.coordination.check(app.model, { sl: o.sl, slBlocks51: o.sl && o.slBlocks51, backupAdder: o.backupAdder, busInst50: o.busInst50, breakerTime: o.breakerTime, Mmax: o.Mmax });
+    const bad = res.pairs.filter((p) => p.status !== 'ok');
+    const nDes = bad.filter((p) => p.status === 'descoordenado').length;
+    const sensBad = res.sensitivity.filter((x) => !x.okPhase || !x.okGround);
+    const showAll = !!app.critAll;
+    const list = showAll ? res.pairs : bad;
+    const lbl = (d) => app.swLabel(d);
+    const elName = (e) => ({ P50: '50P', P51: '51P', N50: '50N', N51: '51N', B51: '51 ret.' }[e] || e);
+    return el('div', { class: 'stack' },
+      el('span', { class: 'eyebrow', text: 'Critérios de coordenação e sensibilidade (seção 4.7.1)' }),
+      el('p', { class: 'small' }, `Cadeias de alcance máximo da Fig. 4.6, esquema ${app.schemeLabel()}. `,
+        el('strong', { text: `${nDes} par(es) descoordenado(s)` }), `, ${bad.length - nDes} abaixo do critério de margem e ${sensBad.length} relé(s) abaixo do múltiplo mínimo.`),
+      el('p', { class: 'small muted', text: 'Margem = tempo do montante − tempo do jusante, com a falta na barra do relé a jusante e no fim da zona dele. Descoordenado: margem menor que a abertura do disjuntor. Critério: 0,4 s entre a proteção geral de barra e os alimentadores (Tab. 4.9) e 0,3 s ao longo dos alimentadores. Com seletividade lógica, o 50 do montante é considerado bloqueado pelo GOOSE.' }),
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, ['Par e falta', 'Jus.', 'Mont.', 'Margem'].map((h, i) => el('th', { class: i === 0 ? 'l' : '', text: h })))),
+        el('tbody', {}, list.map((p) => el('tr', {},
+          el('td', { class: 'l', style: { whiteSpace: 'normal' } }, `${lbl(p.up)} → ${lbl(p.down)}`, el('br'),
+            el('span', { class: 'small muted', text: `${p.where}, ${p.fault} ${fmt.num(p.I, 0)} A` })),
+          el('td', { style: { whiteSpace: 'normal' }, text: `${fmt.num(p.tDown * 1000, 0)} ${elName(p.elDown)}` }),
+          el('td', { style: { whiteSpace: 'normal' }, text: isFinite(p.tUp) ? `${fmt.num(p.tUp * 1000, 0)} ${elName(p.elUp)}` : 'não atua' }),
+          el('td', { style: { whiteSpace: 'normal', color: p.status === 'descoordenado' ? 'var(--crit)' : p.status === 'ok' ? 'var(--ok)' : 'var(--warn)' } },
+            isFinite(p.margin) ? fmt.num(p.margin * 1000, 0) : '-', el('br'), el('span', { class: 'small', text: { descoordenado: 'descoord.', 'abaixo do critério': 'abaixo', ok: 'ok' }[p.status] }))))))),
+      el('p', { class: 'small muted', text: 'Tempos e margens em ms.' }),
+      el('button', { type: 'button', class: 'btn', onclick: () => { app.critAll = !showAll; app.renderPanel(); } }, showAll ? 'Mostrar só os pares fora do critério' : 'Mostrar todos os pares'),
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, ['Relé', 'Barra remota', 'M fase (2F ≥ 2,4)', 'M neutro (FT ≥ 4,0)'].map((h, i) => el('th', { class: i < 2 ? 'l' : '', text: h })))),
+        el('tbody', {}, res.sensitivity.map((x) => el('tr', {},
+          el('td', { class: 'l', text: lbl(x.dev) }), el('td', { class: 'l', text: x.remote }),
+          el('td', { style: { color: x.okPhase ? null : 'var(--crit)' }, text: x.mPhase != null ? fmt.num(x.mPhase, 2) : '-' }),
+          el('td', { style: { color: x.okGround ? null : 'var(--crit)' }, text: x.mGround != null ? fmt.num(x.mGround, 1) : '-' })))))));
+  }
+
   function editForm(app, relayId) {
     const cfg = app.model.relays[relayId];
     const snap = app.currentSnap();
@@ -408,7 +444,7 @@
       const s = g[part] || {};
       let input;
       if (key === 'curve') {
-        input = el('select', { id }, Object.keys(PR.CURVES).filter((k) => k !== 'VI').map((k) => el('option', { value: k, selected: (s.curve === 'VI' ? 'MI' : s.curve) === k ? true : null, text: k })));
+        input = el('select', { id }, Object.keys(PR.CURVES).filter((k) => k !== 'VI').map((k) => el('option', { value: k, selected: (s.curve === 'VI' ? 'MI' : s.curve) === k ? true : null, text: k.replace('_', ' ') })));
       } else {
         const v = key === 'instDelay' ? (s[key] || 0) * 1000 : s[key];
         input = el('input', { type: 'number', id, step, value: v == null ? '' : v, style: { width: '100%' } });
@@ -467,6 +503,7 @@
       sw('iecBF', 'Falha de disjuntor (50BF) com trip remoto', 'bf', 'Se a corrente persiste por BFD após o trip, o relé envia GOOSE de trip ao relé a montante (REMTRIP).'),
       sw('iecBus', 'Instantâneo da proteção de barramento habilitado', 'busInst50', 'No esquema convencional o 50/50N de AQZ_MT fica bloqueado; com seletividade lógica pode ser habilitado (Tab. 4.13).'),
       sw('iec51', 'Estender o bloqueio ao 51 com 51 de retaguarda', 'slBlocks51', 'Solução da seção 5.7.3: o 51 também é bloqueado e uma 51 de retaguarda com somador garante a proteção se o 50BF falhar.'),
+      sw('iecQual', 'Supervisão da qualidade da mensagem (Fig. 3.8)', 'slQuality', 'Se as mensagens de bloqueio se perdem, o relé que as recebe inibe o próprio 50 e atua pela curva 51. Nos ensaios do Cap. 5 a qualidade não foi verificada.'),
       el('div', { class: 'grid2' },
         numIn('iecBfd', 'BFD (ms)', o.bfd * 1000, 10, (v) => { o.bfd = v / 1000; }),
         numIn('iecLat', 'Latência GOOSE (ms)', o.gooseLatency * 1000, 1, (v) => { o.gooseLatency = v / 1000; }),
@@ -509,6 +546,29 @@
       el('span', { class: 'eyebrow', text: 'Reprodução dos ensaios do Capítulo 5' }),
       el('p', { class: 'small muted', text: 'Ajustes do alimentador 21I5 (Tab. 4.13). Nomenclatura do TCC: AQZ_MT = 01Z2, AQZ = 21I5, RL1 = RS4, RL2 = RL3. Cada ensaio usa a sua própria configuração, sem alterar o esquema escolhido na barra superior.' }),
       app.scnId !== 'tcc2015' ? el('div', { class: 'callout warn', text: 'Os ensaios usam a rede da Fig. 4.2; executar um deles troca a topologia exibida.' }) : null));
+    // 5.5: curvas dos relés contra os pontos I x t do Apêndice A
+    root.append(el('h3', { text: '5.5 Sobrecorrente (Apêndice A)' }));
+    const ocOpen = !!app.ocOpen;
+    const ocCard = el('div', { class: 'test-card' },
+      el('header', {}, el('div', {}, el('h3', { text: 'Pontos I × t dos quatro relés ensaiados' }), el('span', { class: 'ref', text: 'Seção 5.5, Apêndice A' })),
+        el('button', { type: 'button', class: 'btn', onclick: () => { app.ocOpen = !ocOpen; app.renderPanel(); } }, ocOpen ? 'Ocultar' : 'Mostrar')),
+      el('p', { class: 'small', text: 'Tempos em ms. Falta trifásica injetada com o programa Manual da mala. O simulado usa as mesmas equações do motor (curva IEC e tempo definido com o processamento de 13 ms) e os ajustes secundários do relé ensaiado.' }));
+    if (ocOpen) {
+      SH.labs.overcurrent.forEach((r) => {
+        const st = r.set;
+        ocCard.append(el('p', { class: 'small', style: { margin: '10px 0 4px' } }, el('strong', { text: `${r.id} (${app.swLabel(r.dev)})` }),
+          ` · ${st.curve === 'NI' ? 'IEC NI' : 'IEC MI'}, dial ${fmt.num(st.dial, 2)}, pickup ${fmt.num(st.pickup, 2)} A; 50 em ${fmt.num(st.inst, 2)} A com ${fmt.ms(st.instDelay * 1000, 0)} · ${r.ref}`));
+        ocCard.append(el('div', { class: 'table-wrap' }, el('table', {},
+          el('thead', {}, el('tr', {}, ['I (A)', 'El.', 'Medido', 'Simul.', 'Dif.', 'Mala'].map((h) => el('th', { text: h })))),
+          el('tbody', {}, r.points.map(([I, t, status]) => {
+            const sim = SH.labs.overcurrentTime(st, I);
+            return el('tr', {}, el('td', { text: fmt.num(I, 1) }), el('td', { text: sim.el }), el('td', { text: fmt.num(t * 1000, 1) }),
+              el('td', { text: fmt.num(sim.t * 1000, 1) }), el('td', { text: `${sim.t - t >= 0 ? '+' : ''}${fmt.num((sim.t - t) * 1000, 1)}` }), el('td', { text: status }));
+          })))));
+      });
+      ocCard.append(el('p', { class: 'small muted', text: SH.labs.OVERCURRENT_NOTE }));
+    }
+    root.append(ocCard);
     let group = null;
     SH.labs.tests.forEach((t) => {
       if (t.group !== group) { group = t.group; root.append(el('h3', { text: group })); }
@@ -523,8 +583,9 @@
           el('thead', {}, el('tr', {}, el('th', { class: 'l', text: 'Medida' }), el('th', { class: 'l', text: 'TCC' }), el('th', { text: 'Medido' }), el('th', { text: 'Simulado' }))),
           el('tbody', {}, t.measures.map((m, i) => {
             const v = ran.values[i];
-            const txt = typeof v === 'number' ? (m.unit === 'ms' ? fmt.ms(v, 1) : fmt.num(v, 0)) : (v == null ? '-' : String(v));
-            const meas = typeof m.lab === 'number' ? fmt.ms(m.lab, 1) : (m.labText || '-');
+            const fv = (x) => (m.unit === 'ms' ? fmt.ms(x, 1) : m.unit === 's' ? fmt.sec(x, 2) : fmt.num(x, 0));
+            const txt = typeof v === 'number' ? fv(v) : (v == null ? '-' : String(v));
+            const meas = typeof m.lab === 'number' ? fv(m.lab) : (m.labText || '-');
             return el('tr', {}, el('td', { class: 'l', style: { whiteSpace: 'normal' }, text: m.label }), el('td', { class: 'l', text: m.tcc }), el('td', { style: typeof m.lab === 'number' ? null : { whiteSpace: 'normal' }, text: meas }), el('td', { text: txt }));
           })))));
       }

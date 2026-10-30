@@ -46,6 +46,8 @@ Rede radial, cargas como correntes constantes iguais à carga pesada de cada tre
 - **50P e 50N**: tempo definido igual ao atraso da Tab. 4.13. Nos ajustes de Nobre (2013), que não têm atraso intencional, o tempo é zero.
 - **Integração no tempo**: o 51 acumula o progresso ∫dt/t(I) entre eventos (disco de indução) e rearma instantaneamente quando a corrente cai abaixo do pickup.
 
+**Curvas.** Além das quatro curvas IEC, estão disponíveis as três curvas IEEE da Tab. 2.1 do TCC, na forma t = TD · (β / (M^α − 1) + L). Para a curva IEEE moderadamente inversa foram usados os coeficientes da IEEE C37.112 (α = 0,02 e L = 0,114); a Tab. 2.1 imprime α = 2 e L = 0,18.
+
 ### 4.2 Religamento (79)
 
 A notação do TCC é lida como sequência de operações até o bloqueio: `1I+2T` significa três operações, a primeira com o 50/50N habilitado e as duas seguintes temporizadas; `3I` são três operações instantâneas. O número de religamentos é o número de operações menos um. O tempo morto é o da Tab. 4.11/4.12 (10 s nos religadores da SE, mais 1 s a cada nível a jusante). Depois de um religamento bem-sucedido, o contador rearma após 45 s (79RSD da OAP 165/2013 da SE AQZ e do relé AQZ ensaiado). Trip remoto por 50BF leva direto ao bloqueio.
@@ -65,6 +67,7 @@ Os disjuntores secundários 01Z1 e 01Z2 são modelados como um equivalente únic
 - **Seletividade lógica.** Quando um relé registra partida de qualquer elemento (50P1P, 51P1P, 50N1P, 51N1P), envia GOOSE ao primeiro relé a montante na topologia vigente, que fica com os elementos de tempo definido inibidos enquanto a mensagem estiver ativa (torque control "NOT (VB004 OR VB005)", seção 5.3.2). A opção de estender o bloqueio ao 51 cria uma 51 de retaguarda, idêntica à principal com somador de 0,20 s (51ACT, Fig. 5.6c).
 - **Falha de disjuntor (50BF).** No trip, um temporizador BFD de 0,20 s é iniciado (Fig. 5.5). Se, ao final, o disjuntor continua fechado e a corrente supera 50BFP = 0,02 A secundários (multiplicado pela RTC), o relé envia GOOSE de trip ao relé a montante, que abre sem religar.
 - **Mensagens.** Latência fixa de 3 ms (classe TT6 da IEC 61850-5 para mensagens de trip). É possível simular perda de todas as mensagens, só das de bloqueio ou só das de 50BF.
+- **Supervisão da qualidade da mensagem (Fig. 3.8).** Na lógica de proteção de barramento do TCC, o 50 do relé a montante só atua se o bloqueio estiver ausente e a comunicação estiver boa. Com a opção `slQuality` (padrão), a perda das mensagens de seletividade lógica bloqueia o 50 dos relés que as recebem, e a falta é eliminada pela curva 51. Nos ensaios do Cap. 5 a qualidade não foi verificada ("para simplificar os testes"), por isso a opção pode ser desligada.
 - **Processamento do relé.** Parâmetro `relayDelay`, somado ao atraso dos elementos 50/50N e à saída do 50BF. Vale 0 na simulação livre, como nos cálculos do TCC, e 13 ms nos ensaios. O valor foi calibrado nos relatórios da mala CE-6006: o GOOSE de trip sai de 10 a 16 ms depois do atraso ajustado (mediana 13 ms) e o GOOSE de 50BF, de 8 a 13 ms depois do BFD. As curvas 51 não recebem esse atraso, porque os tempos medidos já ficam a até 11 ms da curva teórica, com sinais variados. O trip recebido por GOOSE soma só a latência da mensagem (medido: 4 a 6 ms entre o GOOSE de 50BF e o GOOSE de trip do relé a montante).
 - **Assinantes.** Num IED real, as assinaturas GOOSE são configuradas de forma estática no arquivo SCD. No simulador, o relé de destino é o primeiro dispositivo a montante na topologia em vigor, o que equivale a supor assinaturas configuradas para cada topologia prevista.
 
@@ -73,6 +76,14 @@ Os disjuntores secundários 01Z1 e 01Z2 são modelados como um equivalente únic
 Os presets da aba *Ensaios* reproduzem o laboratório e não a Tab. 4.13 quando as duas diferem. Os ajustes vêm do arquivo do AcSELerator (`SDMT_Aquiraz Settings.rdb`, set 1 dos relés AQZ_MT, AQZ, RL1 e RL2): ciclo 2I+2T em AQZ e atraso de 0,02 s no 50 de RL2 (0,03 s na Tab. 4.13). Os demais ajustes do arquivo conferem com a Tab. 4.13, salvo o arredondamento dos valores secundários (por exemplo 51N de 21I5 com 0,05 A × 500 = 25 A, contra 26 A).
 
 Nos relatórios fase-terra, a mala injetou só as correntes de fase (I1 a I3 em um relé e I4 a I6 no outro). No SEL-751, os elementos 50N/51N usam o canal IN, que ficou sem corrente. Os tempos medidos só são reproduzidos com os elementos de neutro fora de serviço (opção `groundElements: false`), por isso esses ensaios validam os elementos de fase com corrente monofásica e não a proteção de neutro.
+
+### 5.2 Ensaios de sobrecorrente e de religamento (Apêndices A e B)
+
+Os 40 pontos I × t do Apêndice A são comparados com as equações do motor, usando os ajustes secundários de cada relé ensaiado. Os ensaios de religamento usam a opção `relaysOff` para deixar só o relé ensaiado em serviço, como na mala. No laboratório o 52A não estava ligado e o tempo morto começou a contar no fim do pulso de trip (TDURD = 0,5 s); os presets somam esses 0,5 s ao tempo morto.
+
+### 5.3 Verificação dos critérios de coordenação (seção 4.7.1)
+
+O módulo `js/core/coordination.js` percorre as cadeias de alcance máximo da Fig. 4.6 e, para cada par montante/jusante, calcula os tempos estáticos com falta trifásica e fase-terra em dois pontos: a barra do relé a jusante e o fim da zona dele. O par é classificado como descoordenado quando a margem é menor que a abertura do disjuntor, e como abaixo do critério quando a margem é menor que 0,4 s (barra x alimentador, Tab. 4.9) ou 0,3 s (ao longo do alimentador). A sensibilidade é verificada na primeira barra remota: múltiplo do pickup de fase com o curto bifásico (≥ 2,4) e do pickup de neutro com o curto fase-terra (≥ 4,0). O TCC não informa qual curto usa nesse critério. A verificação respeita o esquema escolhido: com seletividade lógica, o 50 do montante é tratado como bloqueado; com o bloqueio estendido ao 51, vale a 51 de retaguarda.
 
 ## 6. Simulador de eventos discretos
 

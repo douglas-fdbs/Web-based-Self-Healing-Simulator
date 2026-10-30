@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..', 'js');
-['core/complex', 'core/network', 'core/shortcircuit', 'core/protection', 'core/selfhealing', 'core/simulator',
+['core/complex', 'core/network', 'core/shortcircuit', 'core/protection', 'core/selfhealing', 'core/simulator', 'core/coordination',
   'data/aquiraz_tcc2015', 'data/aquiraz_nobre2013', 'data/lab_tests'].forEach((f) => require(path.join(root, `${f}.js`)));
 const SH = globalThis.SH;
 const N = SH.network;
@@ -151,8 +151,9 @@ test('Ensaios: tempos de trip e intervalos entre GOOSEs dentro de 12 ms dos medi
     t.measures.forEach((me, i) => {
       if (typeof me.lab !== 'number' || me.value.type === 'clear') return;
       if (t.id === 's2d' && i === 0) return; // 50P perto do pickup: detecção mais lenta, não modelada
+      const k = me.unit === 's' ? 1000 : 1;
       const v = m(i);
-      assert.ok(Math.abs(v - me.lab) <= 12, `${t.id} "${me.label}": simulado ${v.toFixed(1)} x medido ${me.lab}`);
+      assert.ok(Math.abs(v - me.lab) * k <= 12, `${t.id} "${me.label}": simulado ${v.toFixed(3)} x medido ${me.lab}`);
     });
   });
 });
@@ -166,6 +167,14 @@ test('Ensaios: eliminação simulada 0 a 25 ms antes do pós-falta da mala (rece
       assert.ok(d >= 0 && d <= 25, `${t.id}: simulado ${m(i).toFixed(1)} x medido ${me.lab}`);
     });
   });
+});
+
+test('Apêndice A: curvas dos 4 relés a até 2% e tempo definido a até 12 ms dos 40 pontos medidos', () => {
+  SH.labs.overcurrent.forEach((r) => r.points.forEach(([I, t]) => {
+    const sim = SH.labs.overcurrentTime(r.set, I);
+    if (sim.el === '51') assert.ok(Math.abs(sim.t - t) / t < 0.02, `${r.id} ${I} A: ${sim.t} x ${t}`);
+    else assert.ok(Math.abs(sim.t - t) <= 0.012, `${r.id} ${I} A: ${sim.t} x ${t}`);
+  }));
 });
 
 test('Ensaio 5.7.3(a): com o atraso real de RL2 (0,02 s), a 51 de RS4 só vence o 50BF com o processamento do relé', () => {
@@ -190,17 +199,51 @@ test('Ensaio monofásico AQZ-RL1 sem 50BF: o tempo medido (654 ms) só é reprod
   assert.ok(Math.abs((tr.t - com.res.metrics.faultAt) * 1000 - 200) < 2);
 });
 
-test('Ensaio 5.6.1: religamento de 21I5 com a configuração do laboratório (2I + 2T)', () => {
-  const { m } = lab('r1');
-  assert.equal(m(0), 4);
-  assert.ok(Math.abs(m(2) - 200) < 1, `${m(2)}`);
+test('Apêndice B: religamentos de AQZ, RL1 e RL2 isolados (número e tipo das aberturas)', () => {
+  assert.equal(lab('r1').m(0), 4);
+  assert.equal(lab('r1').m(1), '50, 50, 51, 51');
+  assert.equal(lab('r3').m(1), '50, 50, 50');
+  assert.equal(lab('r4').m(0), 2);
 });
 
-test('Ensaio 5.6.2: religamento AQZ + RL1 -> RL1 bloqueia e AQZ termina fechado', () => {
+test('Ensaio 5.6.2 (Apêndice B): AQZ abre na 1ª e na 2ª falta, RL1 bloqueia e AQZ termina fechado', () => {
   const { m } = lab('r2');
-  assert.equal(m(0), 1);
+  assert.equal(m(0), 2);
   assert.equal(m(1), 3);
   assert.equal(m(2), 'fechado');
+  // com o ciclo da Tab. 4.13 (1I+2T), AQZ abriria só na primeira falta, como diz o texto do TCC
+  assert.equal(lab('r2', { cycleOverrides: {} }).m(0), 1);
+});
+
+test('Fig. 3.8: sem GOOSE de bloqueio, a supervisão da qualidade inibe o 50 de AQZ_MT', () => {
+  const base = { script: faultScript('T8', 0), options: { sl: true, bf: false, busInst50: true, commFail: 'SL', sra: false, reclose: false } };
+  const trips = (o) => SH.simulator.run(tcc, Object.assign({}, base, { options: Object.assign({}, base.options, o) })).log.filter((e) => e.cat === 'trip').map((e) => e.dev);
+  assert.deepEqual(trips({}), ['21I5']);
+  assert.deepEqual(trips({ slQuality: false }).sort(), ['01Z2', '21I5']);
+});
+
+test('Seção 4.7.3: a verificação de critérios aponta os três pontos críticos do TCC', () => {
+  const conv = SH.coordination.check(tcc, { busInst50: true });
+  const st = (u, d, w, f) => conv.pairs.find((x) => x.up === u && x.down === d && x.where.startsWith(w) && x.fault === f).status;
+  assert.equal(st('01Z2', '21I5', 'barra', '3F'), 'descoordenado');
+  assert.equal(st('21I5', 'RS4', 'barra', '3F'), 'descoordenado');
+  assert.equal(st('RS1', 'RL1', 'fim', '3F'), 'descoordenado');
+  // com a solução do TCC (SL no 50 e no 51, retaguarda de 200 ms) não resta par descoordenado
+  const iec = SH.coordination.check(tcc, { sl: true, busInst50: true, slBlocks51: true });
+  assert.equal(iec.pairs.filter((x) => x.status === 'descoordenado').length, 0);
+});
+
+test('Varredura: com SL no 50 e no 51, toda falta na configuração normal é eliminada só pelo relé mais próximo', () => {
+  const opts = { sl: true, bf: true, busInst50: true, slBlocks51: true, sra: false };
+  const topo0 = N.analyze(tcc, N.normalState(tcc));
+  Object.keys(tcc.segments).forEach((seg) => ['3F', 'FT'].forEach((type) => {
+    const res = SH.simulator.run(tcc, { script: [{ t: 0, type: 'fault', spec: { kind: 'segment', seg, x: 0.5, type } }], options: opts });
+    const sg = tcc.segments[seg];
+    const nd = topo0.node[sg.a].depth > topo0.node[sg.b].depth ? sg.b : sg.a;
+    const nearest = N.protectiveDevicesUpstream(tcc, topo0, nd)[0];
+    const first = res.log.filter((e) => e.cat === 'trip' && e.t < 5).map((e) => e.dev);
+    assert.deepEqual([...new Set(first)], [nearest], `${seg} ${type}: ${first}`);
+  }));
 });
 
 test('Nobre: falta no início de T8 abre 21I5 e RS3 juntos (instantâneos sem atraso); o SRA religa 21I5', () => {

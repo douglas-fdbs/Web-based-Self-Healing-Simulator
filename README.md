@@ -43,7 +43,9 @@ A referência principal é o TCC de Mário Sérgio de Lima Rodrigues (UFC, 2015)
 
 **Animação e análises.** Fluxo animado com a cor da subestação que alimenta cada trecho, câmera lenta automática nos transitórios de milissegundos e avanço rápido nos tempos mortos, arcos das mensagens GOOSE, contagem regressiva do religamento, linha do tempo e registro de eventos exportável em CSV. Painéis de curto-circuito com comparação ao TCC, carregamento por trecho, coordenograma tempo × corrente do caminho selecionado e edição dos ajustes.
 
-**Ensaios do Capítulo 5.** Os onze ensaios de laboratório descritos no TCC e mais cinco ensaios fase-terra que só aparecem nos relatórios da mala de testes (religamento, seletividade lógica e 50BF nos pares AQZ_MT/AQZ, AQZ/RL1 e RL1/RL2) podem ser executados na aba *Ensaios*, com o valor citado no TCC, o valor medido no relatório da mala CE-6006 e o valor simulado.
+**Critérios de coordenação.** A aba *Proteção* verifica as margens de coordenação e a sensibilidade das cadeias de alcance máximo (seção 4.7.1 do TCC) no esquema escolhido e mostra os pares fora do critério.
+
+**Ensaios do Capítulo 5.** Os ensaios de laboratório descritos no TCC, os religamentos isolados do Apêndice B, os pontos de sobrecorrente do Apêndice A e cinco ensaios fase-terra que só aparecem nos relatórios da mala de testes (religamento, seletividade lógica e 50BF nos pares AQZ_MT/AQZ, AQZ/RL1 e RL1/RL2) podem ser executados na aba *Ensaios*, com o valor citado no TCC, o valor medido no relatório da mala CE-6006 e o valor simulado.
 
 ## Validação
 
@@ -57,7 +59,10 @@ Resumo (detalhes em [`docs/VALIDACAO.md`](docs/VALIDACAO.md), gerado por `node t
 | Curtos da Tab. 3.6 de Nobre (2013) | maior erro de 0,0024% |
 | Recomposição para falta em cada trecho (Tab. 4.2 de Nobre) | 12 de 12 casos com as mesmas manobras |
 | Recomposição da Fig. 4.3 do TCC (falta em T1) | abre RS1 e fecha RL1, como no TCC |
-| Ensaios do Cap. 5 contra os relatórios da mala (16 ensaios) | mesmos comportamentos; tempos de trip e intervalos entre GOOSEs a até 12 ms dos medidos, com o processamento do relé calibrado em 13 ms |
+| Ensaios do Cap. 5 contra os relatórios da mala (18 ensaios) | mesmos comportamentos; tempos de trip e intervalos entre GOOSEs a até 12 ms dos medidos, com o processamento do relé calibrado em 13 ms |
+| Ensaios de sobrecorrente do Apêndice A (40 pontos I × t, 4 relés) | curvas a até 1,7% e tempo definido a até 10 ms dos medidos |
+| Religamentos do Apêndice B (AQZ, RL1, RL2 e AQZ + RL1) | mesmo número e tipo de aberturas e mesmo intervalo trip → religamento |
+| Pontos críticos de coordenação da seção 4.7.3 | os três reproduzidos pela verificação de critérios e pela simulação; nenhum par descoordenado com a solução proposta no TCC |
 
 ## Figura 4.1 ou Figura 4.2
 

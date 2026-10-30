@@ -21,7 +21,8 @@
   // trip dos elementos 50/50N sai de 10 a 16 ms depois do atraso ajustado
   // (mediana 13 ms) e o GOOSE do 50BF sai de 8 a 13 ms depois do BFD.
   const LAB_DELAY = 0.013;
-  const LAB = (extra) => Object.assign({ relayDelay: LAB_DELAY }, NO_RECLOSE, extra);
+  // Nos ensaios a qualidade da mensagem GOOSE não foi verificada (seção 5.3.1).
+  const LAB = (extra) => Object.assign({ relayDelay: LAB_DELAY, slQuality: false }, NO_RECLOSE, extra);
   // Ajuste real do RL2 do laboratório (SEL-751, 50P1D = 0,02 s); a Tab. 4.13 dá 0,03 s.
   const RL2_LAB = { RL3: 0.02 };
   const closeIn21I5 = { kind: 'segment', seg: 'T8', x: 0, type: '3F' }; // logo após 21I5: 9419 A
@@ -30,30 +31,60 @@
   const closeIn21I5FT = Object.assign({}, closeIn21I5, { type: 'FT' }); // 10176 A
   const afterRS4FT = Object.assign({}, afterRS4, { type: 'FT' }); // 3309 A
   const maxReach21I5 = { RL3: true, '21S1': false }; // RL3 alimentado por 21I5 (Fig. 4.6c)
+  // Nos ensaios de religamento o 52A não estava ligado ("52A = 0") e o tempo morto
+  // (79OI) só começou a contar no fim do pulso de trip (TDURD = 0,5 s): o religamento
+  // saiu 10,51 s, 11,51 s e 12,5 s depois do trip. O preset desconta a abertura de 50 ms.
+  const LAB_DEAD = (oi) => oi + 0.5 - 0.05;
+  const RECLOSE_NOTE = 'No laboratório o contato 52A não estava ligado (52A = 0) e o tempo morto só começou a contar no fim do pulso de trip (TDURD = 0,5 s); por isso o religamento saiu cerca de 0,5 s depois do ajuste. Em campo, com o 52A ligado, o tempo morto conta a partir da abertura do disjuntor.';
   const MONO_NOTE = 'Ensaio registrado nos relatórios da mala, mas não detalhado no texto do TCC. Nos ensaios monofásicos a mala injetou só as fases (I1 a I3 em um relé, I4 a I6 no outro). No SEL-751 os elementos 50N/51N medem o canal IN, que não recebeu corrente: os tempos medidos só são coerentes com os elementos de fase (com neutro, 21I5 abriria pelo 51N em cerca de 200 ms). Por isso o ensaio é simulado com os elementos de neutro fora de serviço.';
 
   // "lab" = valor medido no relatório da mala (ms após o início da falta, ou intervalo entre GOOSEs).
   const tests = [
     {
       id: 'r1', group: '5.6 Religamento automático', title: 'Religamento de um IED (AQZ = 21I5)',
-      ref: 'Seção 5.6.1, Fig. 5.12',
+      ref: 'Seção 5.6.1, Fig. 5.12; Apêndice B, Tabs. B1 a B3',
       description: 'Falta permanente logo após 21I5. Configuração do laboratório (arquivo de ajustes do SEL-751): E79 = 3 e torque control "AND (SH0 OR SH1)", isto é, 50 habilitado nas duas primeiras operações e três religamentos.',
-      setup: { fault: closeIn21I5, options: { sra: false, relayDelay: LAB_DELAY, cycleOverrides: { '21I5': ['I', 'I', 'T', 'T'] } } },
+      note: RECLOSE_NOTE,
+      setup: { fault: closeIn21I5, options: { sra: false, relayDelay: LAB_DELAY, relaysOff: ['01Z2'], cycleOverrides: { '21I5': ['I', 'I', 'T', 'T'] }, deadOverrides: { '21I5': LAB_DEAD(10) } } },
       measures: [
-        { label: 'Número de aberturas do 21I5', tcc: '4 (três religamentos)', value: { type: 'count', dev: '21I5' }, unit: '' },
-        { label: '1ª abertura (50P, atraso 100 ms)', tcc: '≈ 100 ms', value: { type: 'tripN', dev: '21I5', n: 0, rel: 'fault' }, unit: 'ms' },
-        { label: 'Últimas aberturas, tempo após o religamento (51P)', tcc: '200 ms', value: { type: 'tripAfterClose', dev: '21I5', n: 3 }, unit: 'ms' },
+        { label: 'Número de aberturas do 21I5', tcc: '4 (três religamentos)', labText: '4', value: { type: 'count', dev: '21I5' }, unit: '' },
+        { label: 'Elemento de cada abertura', tcc: '50, 50, 51, 51', labText: '50, 50, 51, 51 (faltas de 0,18/0,17/0,27/0,27 s)', value: { type: 'tripElements', dev: '21I5' }, unit: '' },
+        { label: 'Trip → religamento', tcc: '10 s', lab: 10.51, value: { type: 'tripToClose', dev: '21I5', n: 0 }, unit: 's' },
+      ],
+    },
+    {
+      id: 'r3', group: '5.6 Religamento automático', title: 'Religamento de um IED (RL1 = RS4)',
+      ref: 'Apêndice B, Tabs. B4 a B6',
+      description: 'Falta permanente logo após RS4, com os demais relés fora de serviço, como no ensaio isolado da mala. RL1 tem E79 = 2 (três operações instantâneas) e tempo morto de 11 s.',
+      note: RECLOSE_NOTE,
+      setup: { fault: afterRS4, options: { sra: false, relayDelay: LAB_DELAY, relaysOff: ['21I5', '01Z2'], deadOverrides: { RS4: LAB_DEAD(11) } } },
+      measures: [
+        { label: 'Número de aberturas de RS4', tcc: '-', labText: '3', value: { type: 'count', dev: 'RS4' }, unit: '' },
+        { label: 'Elemento de cada abertura', tcc: '-', labText: '50, 50, 50 (faltas de 0,133 s)', value: { type: 'tripElements', dev: 'RS4' }, unit: '' },
+        { label: 'Trip → religamento', tcc: '-', lab: 11.51, value: { type: 'tripToClose', dev: 'RS4', n: 0 }, unit: 's' },
+      ],
+    },
+    {
+      id: 'r4', group: '5.6 Religamento automático', title: 'Religamento de um IED (RL2 = RL3)',
+      ref: 'Apêndice B, Tabs. B7 a B9',
+      description: 'Falta permanente logo após RL3 (alimentado por 21I5), com os demais relés fora de serviço. No relé ensaiado, RL2 tem E79 = 1 (duas operações) e tempo morto de 12 s; a Tab. 4.13 dá "1I", sem religamento.',
+      note: RECLOSE_NOTE,
+      setup: { fault: afterRL3, stateMods: maxReach21I5, options: { sra: false, relayDelay: LAB_DELAY, relaysOff: ['21I5', 'RS4', '01Z2'], instDelayOverrides: RL2_LAB, cycleOverrides: { RL3: ['I', 'I'] }, deadOverrides: { RL3: LAB_DEAD(12) } } },
+      measures: [
+        { label: 'Número de aberturas de RL3', tcc: '-', labText: '2', value: { type: 'count', dev: 'RL3' }, unit: '' },
+        { label: 'Trip → religamento', tcc: '-', lab: 12.50, value: { type: 'tripToClose', dev: 'RL3', n: 0 }, unit: 's' },
       ],
     },
     {
       id: 'r2', group: '5.6 Religamento automático', title: 'Religamento de dois IEDs (AQZ + RL1)',
-      ref: 'Seção 5.6.2, Fig. 5.13',
-      description: 'Falta permanente logo após RS4. Os dois religadores atuam na primeira falta; a partir do 2º ciclo o 50 de 21I5 fica bloqueado e só RS4 abre, até bloquear.',
-      setup: { fault: afterRS4, options: { sra: false, relayDelay: LAB_DELAY } },
+      ref: 'Seção 5.6.2, Fig. 5.13; Apêndice B, tabela de GOOSEs AQZ-RL1',
+      description: 'Falta permanente logo após RS4, com AQZ em 2I+2T (laboratório) e RL1 em 3I. Pelo Apêndice B, os dois abrem na primeira e na segunda falta; na terceira AQZ já está com o 50 bloqueado e só RL1 abre, até bloquear.',
+      note: 'O texto da seção 5.6.2 diz que AQZ "não mais atuou durante as faltas subsequentes", mas a tabela de GOOSEs do Apêndice B registra trip de AQZ também na segunda falta (GI1 em 12,28 s), coerente com o 50 habilitado em SH0 e SH1. ' + RECLOSE_NOTE,
+      setup: { fault: afterRS4, options: { sra: false, relayDelay: LAB_DELAY, relaysOff: ['01Z2'], cycleOverrides: { '21I5': ['I', 'I', 'T', 'T'] }, deadOverrides: { '21I5': LAB_DEAD(10), RS4: LAB_DEAD(11) } } },
       measures: [
-        { label: 'Aberturas de 21I5', tcc: '1 (só na primeira falta)', value: { type: 'count', dev: '21I5' }, unit: '' },
-        { label: 'Aberturas de RS4 (RL1)', tcc: 'ciclo completo até bloquear', value: { type: 'count', dev: 'RS4' }, unit: '' },
-        { label: 'Estado final de 21I5', tcc: 'fechado, suprindo T8', value: { type: 'finalState', dev: '21I5' }, unit: '' },
+        { label: 'Aberturas de 21I5', tcc: '1 (só na primeira falta)', labText: '2 (1ª e 2ª faltas)', value: { type: 'count', dev: '21I5' }, unit: '' },
+        { label: 'Aberturas de RS4 (RL1)', tcc: 'ciclo completo até bloquear', labText: '3', value: { type: 'count', dev: 'RS4' }, unit: '' },
+        { label: 'Estado final de 21I5', tcc: 'fechado, suprindo T8', labText: 'fechado', value: { type: 'finalState', dev: '21I5' }, unit: '' },
       ],
     },
     {
@@ -212,6 +243,33 @@
     },
   ];
 
+  // Seção 5.5 e Apêndice A: ensaios de sobrecorrente (programa Manual da mala),
+  // falta ABC, ajustes secundários do relé ensaiado. [I (A sec), t medido (s), status]
+  const overcurrent = [
+    { id: 'AQZ_MT', dev: '01Z2', ref: 'Tabs. A1 a A3', set: { curve: 'NI', dial: 0.20, pickup: 1.18, inst: 5.10, instDelay: 0.10 },
+      pickupTest: { p51: [1.18, 1.43, 'Aprov.'], p50: [5.10, 5.11, 'Aprov.'] },
+      points: [[2, 2.65, 'Aprov.'], [2.5, 1.85, 'Aprov.'], [3, 1.49, 'Aprov.'], [4, 1.13, 'Aprov.'], [5, 0.960, 'Aprov.'], [6, 0.123, 'Aprov.'], [7, 0.121, 'Aprov.'], [8, 0.119, 'Aprov.'], [9, 0.116, 'Aprov.'], [10, 0.116, 'Aprov.']] },
+    { id: 'AQZ', dev: '21I5', ref: 'Tabs. A4 a A6', set: { curve: 'MI', dial: 0.23, pickup: 1.14, inst: 5.70, instDelay: 0.10 },
+      pickupTest: { p51: [1.14, 1.64, 'Aprov.'], p50: [5.70, 5.72, 'Aprov.'] },
+      points: [[2, 4.12, 'Aprov.'], [2.5, 2.61, 'Aprov.'], [3, 1.91, 'Aprov.'], [4, 1.24, 'Aprov.'], [5, 0.922, 'Aprov.'], [6, 0.123, 'Aprov.'], [7, 0.122, 'Aprov.'], [8, 0.119, 'Aprov.'], [9, 0.117, 'Aprov.'], [10, 0.118, 'Aprov.']] },
+    { id: 'RL1', dev: 'RS4', ref: 'Tabs. A7 a A9', set: { curve: 'MI', dial: 0.10, pickup: 1.05, inst: 8.87, instDelay: 0.05 },
+      pickupTest: { p51: [1.05, 1.48, 'Reprov.'], p50: [8.87, 8.89, 'Aprov.'] },
+      points: [[2, 1.50, 'Aprov.'], [2.5, 0.980, 'Aprov.'], [3, 0.730, 'Aprov.'], [4, 0.489, 'Aprov.'], [5, 0.361, 'Aprov.'], [9.5, 0.0690, 'Aprov.'], [11, 0.0684, 'Reprov.'], [12, 0.0662, 'Reprov.'], [13, 0.0628, 'Reprov.'], [14, 0.0646, 'Reprov.']] },
+    { id: 'RL2', dev: 'RL3', ref: 'Tabs. A10 a A12', set: { curve: 'MI', dial: 0.05, pickup: 0.95, inst: 4.23, instDelay: 0.02 },
+      pickupTest: { p51: [0.95, 1.41, 'Reprov.'], p50: [4.23, 4.24, 'Aprov.'] },
+      points: [[2, 0.614, 'Aprov.'], [2.5, 0.417, 'Aprov.'], [3, 0.312, 'Aprov.'], [3.5, 0.255, 'Aprov.'], [4, 0.212, 'Aprov.'], [5, 0.0405, 'Reprov.'], [6, 0.0360, 'Reprov.'], [7, 0.0352, 'Reprov.'], [8, 0.0343, 'Reprov.'], [9, 0.0327, 'Reprov.']] },
+  ];
+  const OVERCURRENT_NOTE = 'Os pontos "Reprov." de tempo definido (RL1 e RL2) ficaram fora da janela de ±10% configurada na mala porque ela não considera o processamento do relé (13 a 20 ms além do ajuste, o mesmo efeito medido nos ensaios com GOOSE). O pickup do 51 medido com rampa ficou 21% a 48% acima do ajuste em todos os relés, e "Reprov." em RL1 e RL2: com corrente crescente, a rampa registra o instante do trip temporizado, e não o da partida. O texto do TCC afirma que todas as atuações ficaram dentro da margem; as tabelas do Apêndice A não confirmam isso.';
+
+  /** Tempo simulado de um ponto do Apêndice A (mesmas equações do motor, com o processamento calibrado). */
+  function overcurrentTime(set, I, opts = {}) {
+    const PR = SH.protection;
+    const delay = opts.relayDelay != null ? opts.relayDelay : LAB_DELAY;
+    const t51 = PR.curveTime(set.curve, set.dial, I / set.pickup, opts.Mmax || 30);
+    const t50 = I > set.inst ? set.instDelay + delay : Infinity;
+    return t50 < t51 ? { t: t50, el: '50' } : { t: t51, el: '51' };
+  }
+
   const examples = [
     { id: 'ex-fig43', scenario: 'tcc2015', title: 'Fig. 4.3: falta permanente em T1', description: '21I7 religa duas vezes e bloqueia; o SRA abre RS1 e fecha RL1, e T2 passa a ser suprido pela SE ESB.', fault: { kind: 'segment', seg: 'T1', x: 0.5, type: '3F' } },
     { id: 'ex-temp', scenario: 'tcc2015', title: 'Falta temporária em T2', description: 'RS1 abre pelo instantâneo, a falta se extingue no tempo morto e o religamento é bem-sucedido.', fault: { kind: 'segment', seg: 'T2', x: 0.3, type: 'FT' }, temporary: true },
@@ -237,6 +295,16 @@
     }
     if (v.type === 'clear') return res.metrics.firstClear != null ? (res.metrics.firstClear - fault0) * 1000 : null;
     if (v.type === 'finalState') return res.finalState.sw[v.dev].closed ? 'fechado' : 'aberto';
+    if (v.type === 'tripElements') {
+      const lab = { P50: '50', N50: '50N', P51: '51', N51: '51N', B51: '51 ret.', REMTRIP: 'REMTRIP' };
+      return trips(v.dev).map((t) => lab[t.el] || t.el).join(', ') || 'não abriu';
+    }
+    if (v.type === 'tripToClose') {
+      const t = trips(v.dev)[v.n];
+      if (!t) return null;
+      const c = res.log.find((e) => e.cat === 'disjuntor' && e.dev === v.dev && /fechou/.test(e.text) && e.t > t.t);
+      return c ? c.t - t.t : null;
+    }
     if (v.type === 'tripAfterClose') {
       const t = trips(v.dev)[v.n];
       if (!t) return null;
@@ -262,6 +330,6 @@
 
   const CLEAR_NOTE = '¹ No relatório, a eliminação é o início do estado pós-falta da mala, que avança 50 ms (atraso programado) depois de receber o GOOSE de trip; a recepção acrescenta de 7 a 21 ms. No simulador, é o trip mais os 50 ms de abertura do disjuntor.';
 
-  SH.labs = { tests, examples, measure, buildInput, LAB_DELAY, CLEAR_NOTE };
+  SH.labs = { tests, examples, measure, buildInput, LAB_DELAY, CLEAR_NOTE, overcurrent, overcurrentTime, OVERCURRENT_NOTE };
   if (typeof module !== 'undefined' && module.exports) module.exports = SH.labs;
 })(typeof window !== 'undefined' ? window : globalThis);

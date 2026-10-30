@@ -40,6 +40,8 @@
     relayDelay: 0, // atraso de detecção e processamento do IED nos elementos 50/50N e no 50BF (0 = ideal; ensaios: 13 ms)
     groundElements: true, // false: os relés não medem corrente de neutro (ensaios em que o canal IN não foi injetado)
     instDelayOverrides: {}, // { relé: atraso 50/50N em s }, para reproduzir ajustes de laboratório
+    relaysOff: [], // relés fora de serviço (ensaios de um relé isolado na mala)
+    slQuality: true, // supervisão da qualidade da mensagem (Fig. 3.8): sem GOOSE de bloqueio, o 50 a montante fica bloqueado
     sra: true,
     sraDelay: 2, // tempo de decisão do SRA após o último bloqueio
     sraStep: 1, // intervalo entre manobras telecomandadas
@@ -119,13 +121,19 @@
     function addLog(cat, text, extra = {}) {
       log.push(Object.assign({ t: now, cat, text }, extra));
     }
+    // Fig. 3.8: com a mensagem de bloqueio indisponível (qualidade = 1), o relé que a
+    // recebe inibe o próprio 50 para não perder a seletividade.
+    const slQualityFail = opt.sl && opt.slQuality !== false && (opt.commFail === true || opt.commFail === 'all' || opt.commFail === 'SL');
+    let slSubscribers = new Set();
+    const relaysOff = new Set(opt.relaysOff || []);
     function relayOpts(rt) {
+      const base50 = rt.cfg.inst50Scheme ? opt.busInst50 : true;
       return {
         Mmax: opt.Mmax,
         sl: opt.sl,
         slBlocks51: opt.sl && opt.slBlocks51,
         backupAdder: opt.slBlocks51 ? opt.backupAdder : null,
-        inst50Enabled: rt.cfg.inst50Scheme ? opt.busInst50 : true,
+        inst50Enabled: base50 && !(slQualityFail && slSubscribers.has(rt.id)),
         relayDelay: opt.relayDelay || 0,
       };
     }
@@ -154,6 +162,14 @@
         lastFaultInfo = { phase: fr.phase, residual: fr.residual, std: fr.std, src: fr.src };
       }
       const inPath = new Set(pathDevs);
+      if (slQualityFail) {
+        slSubscribers = new Set();
+        Object.values(relays).forEach((r) => {
+          if (!st.sw[r.sw].closed || !topo.sw[r.sw].carrying) return;
+          const up = N.upstreamDeviceOf(model, topo, r.sw);
+          if (up && relayOfSw(up)) slSubscribers.add(relayOfSw(up));
+        });
+      }
 
       Object.values(relays).forEach((rt) => {
         const sw = rt.sw;
@@ -173,6 +189,7 @@
           if (inPath.has(sw)) { Iph = fr.phase; Ir = fr.residual; } else { Iph = flows.swFlow[sw] || 0; }
         }
         if (opt.groundElements === false) Ir = 0;
+        if (relaysOff.has(rt.id)) { Iph = 0; Ir = 0; }
         const prevPick = PR.anyPickup(rt);
         let next = null;
         if (Iph > 0 || Ir > 0) next = PR.updateRelay(rt, now, Iph, Ir, relayOpts(rt));
@@ -344,6 +361,8 @@
     // ----- roteiro inicial -----
     (input.script || []).forEach((ev) => push(ev.t || 0, 'script', Object.assign({}, ev)));
     evaluate();
+    if (relaysOff.size) addLog('info', `Relés fora de serviço neste ensaio: ${[...relaysOff].map((r) => swLabel(relays[r] ? relays[r].sw : r)).join(', ')}.`);
+    if (slQualityFail) addLog('info', 'Mensagens de seletividade lógica indisponíveis: pela supervisão da qualidade da mensagem (Fig. 3.8), os relés que as recebem ficam com o 50 bloqueado e atuam pela curva 51.');
     snapshot('Estado inicial');
 
     // ----- laço principal -----
