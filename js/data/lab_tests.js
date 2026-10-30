@@ -43,7 +43,7 @@
     {
       id: 'r1', group: '5.6 Religamento automático', title: 'Religamento de um IED (AQZ = 21I5)',
       ref: 'Seção 5.6.1, Fig. 5.12; Apêndice B, Tabs. B1 a B3',
-      description: 'Falta permanente logo após 21I5. Configuração do laboratório (arquivo de ajustes do SEL-751): E79 = 3 e torque control "AND (SH0 OR SH1)", isto é, 50 habilitado nas duas primeiras operações e três religamentos.',
+      description: 'Falta permanente logo após 21I5. Ciclo 1I+2T do TCC (um religamento instantâneo e dois temporizados, Tab. 4.11), implementado no SEL-751 com E79 = 3 e torque control "AND (SH0 OR SH1)": 50 habilitado nas duas primeiras aberturas e três religamentos.',
       note: RECLOSE_NOTE,
       setup: { fault: closeIn21I5, options: { sra: false, relayDelay: LAB_DELAY, relaysOff: ['01Z2'], cycleOverrides: { '21I5': ['I', 'I', 'T', 'T'] }, deadOverrides: { '21I5': LAB_DEAD(10) } } },
       measures: [
@@ -67,7 +67,7 @@
     {
       id: 'r4', group: '5.6 Religamento automático', title: 'Religamento de um IED (RL2 = RL3)',
       ref: 'Apêndice B, Tabs. B7 a B9',
-      description: 'Falta permanente logo após RL3 (alimentado por 21I5), com os demais relés fora de serviço. No relé ensaiado, RL2 tem E79 = 1 (duas operações) e tempo morto de 12 s; a Tab. 4.13 dá "1I", sem religamento.',
+      description: 'Falta permanente logo após RL3 (alimentado por 21I5), com os demais relés fora de serviço. RL2 do ensaio (RL3 do campo, grupo 2) tem E79 = 1: duas aberturas e tempo morto de 12 s, como pede o critério da Tab. 4.12. A Tab. 4.13 imprime "1I" para esse grupo.',
       note: RECLOSE_NOTE,
       setup: { fault: afterRL3, stateMods: maxReach21I5, options: { sra: false, relayDelay: LAB_DELAY, relaysOff: ['21I5', 'RS4', '01Z2'], instDelayOverrides: RL2_LAB, cycleOverrides: { RL3: ['I', 'I'] }, deadOverrides: { RL3: LAB_DEAD(12) } } },
       measures: [
@@ -78,7 +78,7 @@
     {
       id: 'r2', group: '5.6 Religamento automático', title: 'Religamento de dois IEDs (AQZ + RL1)',
       ref: 'Seção 5.6.2, Fig. 5.13; Apêndice B, tabela de GOOSEs AQZ-RL1',
-      description: 'Falta permanente logo após RS4, com AQZ em 2I+2T (laboratório) e RL1 em 3I. Pelo Apêndice B, os dois abrem na primeira e na segunda falta; na terceira AQZ já está com o 50 bloqueado e só RL1 abre, até bloquear.',
+      description: 'Falta permanente logo após RS4, com AQZ em 1I+2T (aberturas 50, 50, 51, 51) e RL1 em 3I. Pelo Apêndice B, os dois abrem na primeira e na segunda falta; na terceira AQZ já está com o 50 bloqueado e só RL1 abre, até bloquear.',
       note: 'O texto da seção 5.6.2 diz que AQZ "não mais atuou durante as faltas subsequentes", mas a tabela de GOOSEs do Apêndice B registra trip de AQZ também na segunda falta (GI1 em 12,28 s), coerente com o 50 habilitado em SH0 e SH1. ' + RECLOSE_NOTE,
       setup: { fault: afterRS4, options: { sra: false, relayDelay: LAB_DELAY, relaysOff: ['01Z2'], cycleOverrides: { '21I5': ['I', 'I', 'T', 'T'] }, deadOverrides: { '21I5': LAB_DEAD(10), RS4: LAB_DEAD(11) } } },
       measures: [
@@ -271,7 +271,7 @@
   }
 
   const examples = [
-    { id: 'ex-fig43', scenario: 'tcc2015', title: 'Fig. 4.3: falta permanente em T1', description: '21I7 religa duas vezes e bloqueia; o SRA abre RS1 e fecha RL1, e T2 passa a ser suprido pela SE ESB.', fault: { kind: 'segment', seg: 'T1', x: 0.5, type: '3F' } },
+    { id: 'ex-fig43', scenario: 'tcc2015', title: 'Fig. 4.3: falta permanente em T1', description: '21I7 religa três vezes e bloqueia; o SRA abre RS1 e fecha RL1, e T2 passa a ser suprido pela SE ESB.', fault: { kind: 'segment', seg: 'T1', x: 0.5, type: '3F' } },
     { id: 'ex-temp', scenario: 'tcc2015', title: 'Falta temporária em T2', description: 'RS1 abre pelo instantâneo, a falta se extingue no tempo morto e o religamento é bem-sucedido.', fault: { kind: 'segment', seg: 'T2', x: 0.3, type: 'FT' }, temporary: true },
     { id: 'ex-t12', scenario: 'tcc2015', title: 'Falta em T12: recomposição parcial', description: 'A SE AGF não comporta T13+T14 (T16 iria a 454 A > 438 A). O SRA abre RS6 e recompõe só T14.', fault: { kind: 'segment', seg: 'T12', x: 0.5, type: '3F' } },
     { id: 'ex-ftm', scenario: 'tcc2015', title: 'Falta fase-terra mínima em T5', description: 'Falta com resistência de contato de 100 Ω: só os elementos de neutro enxergam a corrente.', fault: { kind: 'segment', seg: 'T5', x: 0.6, type: 'FTm' } },

@@ -93,8 +93,15 @@
     Object.values(model.switches).forEach((w) => {
       if (!w.relay) return;
       const cfg = Object.assign({}, model.relays[w.relay]);
-      if (opt.cycleOverrides[w.relay]) cfg.cycle = opt.cycleOverrides[w.relay];
-      if (opt.deadOverrides[w.relay] != null) cfg.deadTime = opt.deadOverrides[w.relay];
+      // ajustes de ensaio prevalecem sobre ciclo/tempo morto definidos por grupo
+      if (opt.cycleOverrides[w.relay]) {
+        cfg.cycle = opt.cycleOverrides[w.relay];
+        cfg.groups = cfg.groups.map((g) => Object.assign({}, g, { cycle: undefined }));
+      }
+      if (opt.deadOverrides[w.relay] != null) {
+        cfg.deadTime = opt.deadOverrides[w.relay];
+        cfg.groups = cfg.groups.map((g) => Object.assign({}, g, { deadTime: undefined }));
+      }
       if (opt.instDelayOverrides[w.relay] != null) {
         const d = opt.instDelayOverrides[w.relay];
         cfg.groups = cfg.groups.map((g) => Object.assign({}, g, {
@@ -181,6 +188,7 @@
           const wasUsed = rt.group && rt.cfg.groups.length > 1;
           rt.group = g;
           PR.resetElements(rt);
+          PR.applyGroupCycle(rt);
           if (wasUsed && info.carrying) addLog('siap', `${swLabel(sw)}: grupo de ajuste "${g.name}" ativado.`, { dev: sw });
         }
         let Iph = 0;

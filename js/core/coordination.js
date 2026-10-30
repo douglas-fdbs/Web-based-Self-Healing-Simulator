@@ -102,16 +102,52 @@
         const g = group(d.dev);
         const mP = g.phase && g.phase.pickup ? r.i2f / g.phase.pickup : null;
         const mN = g.ground && g.ground.pickup ? r.ift / g.ground.pickup : null;
+        // tempo do 51 com falta na própria barra: 0,2 s nos religadores da SE
+        // (Tab. 4.11) e 0,1 s ao longo do alimentador (Tab. 4.12)
+        const own = cur(d.at);
+        const t51P = g.phase && g.phase.pickup ? PR.curveTime(g.phase.curve, g.phase.dial, own.i3f / g.phase.pickup, o.Mmax) : null;
+        const t51N = g.ground && g.ground.pickup ? PR.curveTime(g.ground.curve, g.ground.dial, own.ift / g.ground.pickup, o.Mmax) : null;
         sensitivity.push({
           chain: ch.id, dev: d.dev, remote: devs[i + 1] ? `barra ${devs[i + 1].dev}` : ch.endLabel,
           i2f: r.i2f, ift: r.ift, mPhase: mP, mGround: mN, okPhase: mP == null || mP >= 2.4, okGround: mN == null || mN >= 4.0,
+          t51P, t51N, t51Target: i === 0 ? 0.2 : 0.1, dialP: g.phase && g.phase.dial,
         });
       });
     });
     return { pairs, sensitivity };
   }
 
-  const api = { check };
+  /**
+   * Conferência da Tab. 4.8: corrente de curto máxima na barra de cada relé (maior
+   * entre 3F e FT, entre todas as fontes que podem alimentá-la) e carga máxima que
+   * passa por ele nas configurações de alcance máximo. Devolve também as colunas
+   * Icc/FS, Ic/FT e Ipk/FT (FS = 20, FT = 1,3).
+   */
+  function ctCheck(model) {
+    const N = SH.network;
+    const SC = SH.shortcircuit;
+    const v = model.scn.validation || {};
+    if (!v.tab48 || !v.reach) return [];
+    const maxLoad = {};
+    Object.values(v.reach).forEach((mods) => {
+      const st = N.normalState(model);
+      Object.entries(mods).forEach(([k, val]) => { st.sw[k].closed = val; });
+      const fl = N.computeFlows(model, N.analyze(model, st), {});
+      Object.entries(fl.swFlow).forEach(([sw, i]) => { maxLoad[sw] = Math.max(maxLoad[sw] || 0, i); });
+    });
+    const busOf = (dev) => ({ '21I2': 'AGF', '21S7': 'ESB', '21S1': 'ESB' }[dev] || (/^21I/.test(dev) ? 'AQZ' : dev));
+    return v.tab48.map(([dev, iccRef, icRef, ipk, rtc]) => {
+      let icc = 0;
+      (v.planilha || []).filter((r) => r[2] === busOf(dev)).forEach((r) => {
+        const x = SC.pathFault(model, r[0], r[3]);
+        icc = Math.max(icc, x.i3f, x.ift);
+      });
+      const ic = maxLoad[dev] || 0;
+      return { dev, icc, iccRef, ic, icRef, ipk, rtc, iccFS: icc / 20, icFT: ic / 1.3, ipkFT: ipk / 1.3 };
+    });
+  }
+
+  const api = { check, ctCheck };
   SH.coordination = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

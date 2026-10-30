@@ -113,7 +113,7 @@ Falta trifásica permanente no meio de cada trecho, configuração normal, esque
 
 Os valores "Medido" vêm dos relatórios do Sequenc (mala Conprove CE-6006, out/2015) da pasta ARTIGO_REI: instantes das transições GOOSE (GI) menos os 100 ms de pré-falta, ou intervalo entre duas transições. As correntes injetadas confirmam os pontos de falta usados (9.419 A, 10.176 A, 4.715 A, 3.309 A e 2.145 A primários).
 
-Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos ensaios quando diferem da Tab. 4.13 (ciclo 2I+2T de AQZ, atraso de 0,02 s no 50 de RL2), disjuntor de 50 ms (atraso programado na mala), GOOSE de 3 ms e tempo de processamento do relé de 13 ms nos elementos 50/50N e no 50BF. Esse valor é a mediana do atraso entre o tempo ajustado e o GOOSE de trip nos ensaios trifásicos (10 a 16 ms; no 50BF, 8 a 13 ms).
+Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos ensaios quando diferem da Tab. 4.13 (atraso de 0,02 s no 50 de RL2; os ciclos de religamento do laboratório coincidem com os da base, lida pelo critério do autor), disjuntor de 50 ms (atraso programado na mala), GOOSE de 3 ms e tempo de processamento do relé de 13 ms nos elementos 50/50N e no 50BF. Esse valor é a mediana do atraso entre o tempo ajustado e o GOOSE de trip nos ensaios trifásicos (10 a 16 ms; no 50BF, 8 a 13 ms).
 
 | Ensaio | Medida | TCC (texto) | Medido | Simulado | Diferença |
 |---|---|---|---:|---:|---:|
@@ -231,7 +231,7 @@ Verificação estática nas cadeias de alcance máximo da Fig. 4.6 (módulo `js/
 
 | Esquema | Pares descoordenados | Pares abaixo do critério | Pares verificados |
 |---|---:|---:|---:|
-| Convencional (50 da barra bloqueado, Anexo B) | 17 | 16 | 52 |
+| Convencional (50 da barra bloqueado, seção 3.3.2) | 17 | 16 | 52 |
 | 50 da barra habilitado, sem seletividade lógica | 25 | 16 | 52 |
 | Seletividade lógica (bloqueio do 50) | 2 | 30 | 52 |
 | Seletividade lógica estendida ao 51 + retaguarda de 200 ms (solução do TCC) | 0 | 17 | 52 |
@@ -265,4 +265,70 @@ Sensibilidade (múltiplo do pickup na primeira barra remota, 2F para fase e FT p
 | RL4 | barra RS7 | 2,03 (< 2,4) | 28,0 |
 
 RS5 e RL4 ficam abaixo do múltiplo 2,4 de fase para o curto bifásico na barra remota. O TCC não informa qual curto usa no critério; com o trifásico, RS5 passa (2,68) e RL4 continua abaixo (2,35).
+
+## 8. Conferência da rede base (Fig. 4.2) com o TCC e a planilha do autor
+
+- Impedâncias dos 16 trechos (Tab. 4.6 no simulador) contra a aba "Impedâncias dos Trechos" da planilha: maior diferença de 0,49 × 10⁻⁴ pu.
+- Valores da Fig. 4.6 (curtos e cargas por trecho): iguais aos da Tab. 4.7 e da Tab. 4.2, já conferidos acima, exceto Icc2F = 972,7 A na barra RL2 (Fig. 4.6c; a Tab. 4.7 dá 907,7 A) e IccFTm = 75,3 A na barra RS7 (Fig. 4.6d; a Tab. 4.7 dá 75,6 A).
+- As sete configurações de alcance máximo (quatro alimentadores da SE AQZ na Fig. 4.6 e os de ESB e AGF na planilha) não têm fontes em paralelo nem trecho acima da ampacidade.
+
+### 8.1 Tab. 4.8: curto e carga máximos por relé
+
+| Relé | Icc máx. sim. | Icc máx. TCC | Carga máx. sim. | Carga máx. TCC | Icc/FS | Ic/FT | Ipk/FT | RTC |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 21I7 | 10.175,9 | 10.175,6 | 260 | 260 | 509 | 200 | 438 | 500 |
+| 21I6 | 10.175,9 | 10.175,6 | 344 | 344 | 509 | 265 | 438 | 500 |
+| 21I5 | 10.175,9 | 10.175,6 | 300 | 300 | 509 | 231 | 438 | 500 |
+| 21I4 | 10.175,9 | 10.175,6 | 334 | 334 | 509 | 257 | 438 | 500 |
+| RS1 | 2.967,4 | 2.967,5 | 237 | 237 | 148 | 182 | 395 | 300 |
+| RS2 | 2.575,0 | 2.574,9 | 323 | 323 | 129 | 248 | 395 | 300 |
+| RS3 | 5.833,1 | 5.832,8 | 155 | 155 | 292 | 119 | 395 | 300 |
+| RS4 | 4.715,5 | 4.715,1 | 217 | 217 | 236 | 167 | 242 | 300 |
+| RS5 | 1.621,0 | 1.621,0 | 208 | 208 | 81 | 160 | 395 | 300 |
+| RS6 | 1.374,9 | 1.374,9 | 166 | 166 | 69 | 128 | 355 | 300 |
+| RL1 | 3.692,6 | 3.692,7 | 180 | 180 | 185 | 138 | 355 | 300 |
+| RL2 | 3.260,6 | 3.260,8 | 217 | 217 | 163 | 167 | 395 | 300 |
+| RL3 | 2.146,4 | 2.146,3 | 155 | 155 | 107 | 119 | 242 | 300 |
+| RL4 | 1.374,6 | 1.374,5 | 89 | 89 | 69 | 68 | 355 | 300 |
+| 21S7 | 9.069,5 | 9.069,5 | 260 | 260 | 453 | 200 | 438 | 500 |
+| 21S1 | 9.069,5 | 9.069,5 | 344 | 344 | 453 | 265 | 438 | 500 |
+| 21I2 | 6.191,7 | 6.191,7 | 412 | 412 | 310 | 317 | 438 | 300 |
+| RS7 | 1.727,9 | 1.727,9 | 166 | 166 | 86 | 128 | 395 | 300 |
+
+Linhas 21S7, 21S1, 21I2 e RS7: aba "Dimensionamento TC e TP" da planilha (não constam da Tab. 4.8). Nos alimentadores da SE AQZ, Icc/FS = 509 A supera em 1,8% o primário do TC escolhido no TCC (500 A).
+
+### 8.2 Tab. 4.13 contra os critérios de tempo (Tabs. 4.11 e 4.12)
+
+| Relé | 51P na própria barra (3F) | 51N na própria barra (FT) | Alvo | Dial de fase |
+|---|---:|---:|---:|---:|
+| 21I7 (21I7) | 200 ms | 200 ms | 200 ms | 0,23 |
+| RS1 (21I7) | 164 ms | 98 ms | 100 ms | 0,05 |
+| RL1 (21I7) | 176 ms | 70 ms | 100 ms | 0,05 |
+| RS3 (21I7) | 201 ms | 23 ms | 100 ms | 0,05 |
+| 21I6 (21I6) | 200 ms | 200 ms | 200 ms | 0,23 |
+| RS2 (21I6) | 168 ms | 98 ms | 100 ms | 0,05 |
+| RL2 (21I6) | 121 ms | 70 ms | 100 ms | 0,05 |
+| RL3 (21I6) | 255 ms | 23 ms | 100 ms | 0,05 |
+| 21I5 (21I5) | 200 ms | 200 ms | 200 ms | 0,23 |
+| RS4 (21I5) | 97 ms | 98 ms | 100 ms | 0,10 |
+| RL3 (21I5) | 103 ms | 23 ms | 100 ms | 0,05 |
+| 21I4 (21I4) | 200 ms | 200 ms | 200 ms | 0,23 |
+| RS5 (21I4) | 313 ms | 98 ms | 100 ms | 0,05 |
+| RS6 (21I4) | 342 ms | 70 ms | 100 ms | 0,05 |
+| RL4 (21I4) | 293 ms | 23 ms | 100 ms | 0,05 |
+
+Os religadores da SE atuam em 200 ms na própria barra, como pede a Tab. 4.11, e RS4 em 97 ms (alvo de 100 ms). Os demais religadores de linha estão com o dial no mínimo do SEL-751 para curvas IEC (0,05, faixa citada na OAP) e ficam entre 103 e 342 ms na fase: a planilha do autor calcula dials menores que 0,05, ou tempos negativos, e adota o mínimo. No neutro todos ficam abaixo de 100 ms.
+
+### 8.3 Conjunto extra: ajustes de campo (Anexo B)
+
+Com os ajustes do Anexo B (atrasos do 50/50N: 0,1 s nos alimentadores, pela OAP 165/2013, e os da Tab. 4.13 nos religadores de linha, porque o Anexo B não os informa):
+
+| Esquema | Base (Tab. 4.13): descoordenados / abaixo | Anexo B: descoordenados / abaixo |
+|---|---:|---:|
+| Convencional (50 da barra bloqueado, seção 3.3.2) | 17 / 16 | 16 / 8 |
+| 50 da barra habilitado, sem seletividade lógica | 25 / 16 | 16 / 8 |
+| Seletividade lógica (bloqueio do 50) | 2 / 30 | 4 / 19 |
+| Seletividade lógica estendida ao 51 + retaguarda de 200 ms (solução do TCC) | 0 / 17 | 0 / 11 |
+
+No Anexo B, RS6 e RL4 têm ajustes idênticos (400 A, dial 0,12, 50 em 1.300 A): a margem entre eles é nula em qualquer falta, o que a Tab. 4.13 corrige.
 

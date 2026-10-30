@@ -136,7 +136,7 @@ p('## 6. Ensaios do Capítulo 5 do TCC contra os relatórios da mala de testes')
 p();
 p('Os valores "Medido" vêm dos relatórios do Sequenc (mala Conprove CE-6006, out/2015) da pasta ARTIGO_REI: instantes das transições GOOSE (GI) menos os 100 ms de pré-falta, ou intervalo entre duas transições. As correntes injetadas confirmam os pontos de falta usados (9.419 A, 10.176 A, 4.715 A, 3.309 A e 2.145 A primários).');
 p();
-p(`Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos ensaios quando diferem da Tab. 4.13 (ciclo 2I+2T de AQZ, atraso de 0,02 s no 50 de RL2), disjuntor de 50 ms (atraso programado na mala), GOOSE de 3 ms e tempo de processamento do relé de ${nf(SH.labs.LAB_DELAY * 1000, 0)} ms nos elementos 50/50N e no 50BF. Esse valor é a mediana do atraso entre o tempo ajustado e o GOOSE de trip nos ensaios trifásicos (10 a 16 ms; no 50BF, 8 a 13 ms).`);
+p(`Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos ensaios quando diferem da Tab. 4.13 (atraso de 0,02 s no 50 de RL2; os ciclos de religamento do laboratório coincidem com os da base, lida pelo critério do autor), disjuntor de 50 ms (atraso programado na mala), GOOSE de 3 ms e tempo de processamento do relé de ${nf(SH.labs.LAB_DELAY * 1000, 0)} ms nos elementos 50/50N e no 50BF. Esse valor é a mediana do atraso entre o tempo ajustado e o GOOSE de trip nos ensaios trifásicos (10 a 16 ms; no 50BF, 8 a 13 ms).`);
 p();
 p('| Ensaio | Medida | TCC (texto) | Medido | Simulado | Diferença |');
 p('|---|---|---|---:|---:|---:|');
@@ -187,7 +187,7 @@ p();
 p('Verificação estática nas cadeias de alcance máximo da Fig. 4.6 (módulo `js/core/coordination.js`), com falta trifásica e fase-terra na barra de cada relé a jusante e no fim da zona dele. "Descoordenado" = margem menor que a abertura do disjuntor (50 ms); critério = 0,4 s entre barra e alimentador (Tab. 4.9) e 0,3 s ao longo do alimentador.');
 p();
 const schemesC = [
-  ['Convencional (50 da barra bloqueado, Anexo B)', {}],
+  ['Convencional (50 da barra bloqueado, seção 3.3.2)', {}],
   ['50 da barra habilitado, sem seletividade lógica', { busInst50: true }],
   ['Seletividade lógica (bloqueio do 50)', { sl: true, busInst50: true }],
   ['Seletividade lógica estendida ao 51 + retaguarda de 200 ms (solução do TCC)', { sl: true, busInst50: true, slBlocks51: true }],
@@ -217,6 +217,57 @@ p('|---|---|---:|---:|');
 conv.sensitivity.forEach((x) => p(`| ${x.dev} | ${x.remote} | ${nf(x.mPhase, 2)}${x.okPhase ? '' : ' (< 2,4)'} | ${nf(x.mGround, 1)}${x.okGround ? '' : ' (< 4,0)'} |`));
 p();
 p('RS5 e RL4 ficam abaixo do múltiplo 2,4 de fase para o curto bifásico na barra remota. O TCC não informa qual curto usa no critério; com o trifásico, RS5 passa (2,68) e RL4 continua abaixo (2,35).');
+p();
+// ---------------------------------------------------------------- Fig. 4.2 x TCC e planilha
+p('## 8. Conferência da rede base (Fig. 4.2) com o TCC e a planilha do autor');
+p();
+const zr = Object.entries(SH.scenarios.tcc2015.validation.planilhaZ).map(([t, ref]) => {
+  const z = tcc.segments[t];
+  return Math.max(...[z.z1.re, z.z1.im, z.z0.re, z.z0.im].map((x, i) => Math.abs(x - ref[i])));
+});
+p(`- Impedâncias dos 16 trechos (Tab. 4.6 no simulador) contra a aba "Impedâncias dos Trechos" da planilha: maior diferença de ${nf(Math.max(...zr) * 1e4, 2)} × 10⁻⁴ pu.`);
+p('- Valores da Fig. 4.6 (curtos e cargas por trecho): iguais aos da Tab. 4.7 e da Tab. 4.2, já conferidos acima, exceto Icc2F = 972,7 A na barra RL2 (Fig. 4.6c; a Tab. 4.7 dá 907,7 A) e IccFTm = 75,3 A na barra RS7 (Fig. 4.6d; a Tab. 4.7 dá 75,6 A).');
+p('- As sete configurações de alcance máximo (quatro alimentadores da SE AQZ na Fig. 4.6 e os de ESB e AGF na planilha) não têm fontes em paralelo nem trecho acima da ampacidade.');
+p();
+p('### 8.1 Tab. 4.8: curto e carga máximos por relé');
+p();
+p('| Relé | Icc máx. sim. | Icc máx. TCC | Carga máx. sim. | Carga máx. TCC | Icc/FS | Ic/FT | Ipk/FT | RTC |');
+p('|---|---:|---:|---:|---:|---:|---:|---:|---:|');
+SH.coordination.ctCheck(tcc).forEach((r) => p(`| ${r.dev} | ${nf(r.icc, 1)} | ${nf(r.iccRef, 1)} | ${nf(r.ic, 0)} | ${nf(r.icRef, 0)} | ${nf(r.iccFS, 0)} | ${nf(r.icFT, 0)} | ${nf(r.ipkFT, 0)} | ${r.rtc} |`));
+p();
+p('Linhas 21S7, 21S1, 21I2 e RS7: aba "Dimensionamento TC e TP" da planilha (não constam da Tab. 4.8). Nos alimentadores da SE AQZ, Icc/FS = 509 A supera em 1,8% o primário do TC escolhido no TCC (500 A).');
+p();
+p('### 8.2 Tab. 4.13 contra os critérios de tempo (Tabs. 4.11 e 4.12)');
+p();
+p('| Relé | 51P na própria barra (3F) | 51N na própria barra (FT) | Alvo | Dial de fase |');
+p('|---|---:|---:|---:|---:|');
+const seen = new Set();
+SH.coordination.check(tcc, {}).sensitivity.forEach((x) => {
+  const k = `${x.chain}/${x.dev}`;
+  if (seen.has(k)) return;
+  seen.add(k);
+  p(`| ${x.dev} (${x.chain}) | ${nf(x.t51P * 1000, 0)} ms | ${nf(x.t51N * 1000, 0)} ms | ${nf(x.t51Target * 1000, 0)} ms | ${nf(x.dialP, 2)} |`);
+});
+p();
+p('Os religadores da SE atuam em 200 ms na própria barra, como pede a Tab. 4.11, e RS4 em 97 ms (alvo de 100 ms). Os demais religadores de linha estão com o dial no mínimo do SEL-751 para curvas IEC (0,05, faixa citada na OAP) e ficam entre 103 e 342 ms na fase: a planilha do autor calcula dials menores que 0,05, ou tempos negativos, e adota o mínimo. No neutro todos ficam abaixo de 100 ms.');
+p();
+p('### 8.3 Conjunto extra: ajustes de campo (Anexo B)');
+p();
+p('Com os ajustes do Anexo B (atrasos do 50/50N: 0,1 s nos alimentadores, pela OAP 165/2013, e os da Tab. 4.13 nos religadores de linha, porque o Anexo B não os informa):');
+p();
+const scnB = JSON.parse(JSON.stringify(SH.scenarios.tcc2015));
+Object.assign(scnB.relays, scnB.settingsSets.anexoB.relays);
+const mB = N.buildModel(scnB);
+p('| Esquema | Base (Tab. 4.13): descoordenados / abaixo | Anexo B: descoordenados / abaixo |');
+p('|---|---:|---:|');
+schemesC.forEach(([name, o]) => {
+  const a = SH.coordination.check(tcc, o);
+  const b = SH.coordination.check(mB, o);
+  const c = (r) => `${r.pairs.filter((x) => x.status === 'descoordenado').length} / ${r.pairs.filter((x) => x.status === 'abaixo do critério').length}`;
+  p(`| ${name} | ${c(a)} | ${c(b)} |`);
+});
+p();
+p('No Anexo B, RS6 e RL4 têm ajustes idênticos (400 A, dial 0,12, 50 em 1.300 A): a margem entre eles é nula em qualquer falta, o que a Tab. 4.13 corrige.');
 p();
 fs.writeFileSync(path.join(__dirname, '..', 'docs', 'VALIDACAO.md'), `${out.join('\n')}\n`);
 console.log(`docs/VALIDACAO.md gerado (${out.length} linhas).`);
