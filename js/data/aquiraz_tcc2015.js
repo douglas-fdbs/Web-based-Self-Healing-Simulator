@@ -7,9 +7,10 @@
  *   distribuição inteligente de Aquiraz. Monografia (Graduação em Eng. Elétrica),
  *   UFC, Fortaleza, 2015.
  *
- * Cada valor indica a tabela de origem. Valores que NÃO constam no TCC e foram
- * adotados para permitir a simulação estão marcados com "assumed" e aparecem
- * destacados na interface.
+ * Base: topologia da Fig. 4.2 e ajustes da Tab. 4.13 do TCC. Cada valor indica
+ * a tabela de origem. Os relés fora da Tab. 4.13 usam os cálculos do autor na
+ * planilha do TCC (origin: 'planilha'). Os ajustes de campo do Anexo B ficam em
+ * settingsSets.anexoB, como conjunto extra.
  *
  * Unidades: impedâncias em pu (base 100 MVA, 13,8 kV), correntes em A primários,
  * comprimentos em metros, tempos em segundos.
@@ -43,7 +44,7 @@
 
   const scn = {
     id: 'tcc2015',
-    name: 'Rede atual (Fig. 4.2)',
+    name: 'Fig. 4.2: rede do TCC (base)',
     longName: 'Sistema de distribuição Aquiraz, topologia da Fig. 4.2 (Rodrigues, 2015)',
     reference: 'RODRIGUES (2015), Cap. 4 e 5',
     base: { mva: 100, kv: 13.8 },
@@ -145,42 +146,84 @@
         rtc: 300, cycle: '1I', deadTime: 13, ref: 'Tab. 4.13 (dois grupos)',
         groups: [
           // grupo 1: alimentado por 21I6, isto é, energizado pelo lado de T10 (terminal RL3b)
-          { id: 'G1', name: 'Grupo 1, alimentado por 21I6 (lado T10)', when: { upstreamNode: 'RL3b' }, phase: P(284, 0.05, 858.3, 0.02), ground: P(20, 0.05, 120, 0.02) },
-          // grupo 2: alimentado por 21I5, energizado pelo lado de T9 (terminal RL3a)
-          { id: 'G2', name: 'Grupo 2, alimentado por 21I5 (lado T9)', when: { upstreamNode: 'RL3a' }, phase: P(284, 0.05, 1267.8, 0.03), ground: P(22, 0.05, 240, 0.03) },
+          // tempo morto pelo critério da Tab. 4.12 (+1 s por nível): 3º nível depois de 21I6 (13 s)
+          { id: 'G1', name: 'Grupo 1, alimentado por 21I6 (lado T10)', when: { upstreamNode: 'RL3b' }, deadTime: 13, phase: P(284, 0.05, 858.3, 0.02), ground: P(20, 0.05, 120, 0.02) },
+          // grupo 2: alimentado por 21I5, energizado pelo lado de T9 (terminal RL3a); 2º nível (12 s)
+          { id: 'G2', name: 'Grupo 2, alimentado por 21I5 (lado T9)', when: { upstreamNode: 'RL3a' }, deadTime: 12, phase: P(284, 0.05, 1267.8, 0.03), ground: P(22, 0.05, 240, 0.03) },
         ],
       },
       RL4: { rtc: 300, cycle: '1I', deadTime: 13, groups: one(P(416, 0.05, 1057, 0.02), P(20, 0.05, 120, 0.02)), ref: 'Tab. 4.13' },
-      '01Z2': { rtc: 800, cycle: 'Bloqueado', deadTime: 10, groups: one(P(941, 0.20, 4079, 0.10, 'NI'), P(188, 0.30, 4079, 0.10, 'NI')), ref: 'Tab. 4.13 (geral de barramento)', inst50Scheme: true },
-      // Dispositivos fora da Tab. 4.13: ajustes calculados pelo autor do TCC na
-      // planilha de cálculos (pasta ARTIGO_REI, abas ESB21S7, ESB21S1 e AGF01I2).
-      // O ciclo de religamento dessas SEs não é informado: adotado o dos
-      // alimentadores da SE AQZ (OAP 165/2013).
+      // O 50/50N da Tab. 4.13 só é usado com seletividade lógica: no esquema
+      // tradicional ele fica bloqueado (seção 3.3.2 do TCC; Anexo B: "BLOQUEADA").
+      '01Z2': { rtc: 800, cycle: 'Bloqueado', deadTime: 10, groups: one(P(941, 0.20, 4079, 0.10, 'NI'), P(188, 0.30, 4079, 0.10, 'NI')), ref: 'Tab. 4.13 (geral de barramento); 50 bloqueado no esquema tradicional (seção 3.3.2)', inst50Scheme: true },
+      // Dispositivos fora da Tab. 4.13, com ajustes calculados pelo autor na
+      // planilha de cálculos do TCC (pasta ARTIGO_REI): abas "SE ESB" e "SE AGF"
+      // (51, 50, 51N, 50N e função 79: ciclo 1I+2T e tempo morto de 10 s, o mesmo
+      // critério da Tab. 4.11) e "Dimensionamento TC e TP" (RTC).
       '21S7': {
-        rtc: 120, cycle: '1I+2T', deadTime: 10,
+        rtc: 500, cycle: '1I+2T', deadTime: 10,
         groups: one(P(570, 0.20, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
-        ref: 'Planilha de cálculos do TCC, aba ESB21S7',
-        assumed: 'Ajustes da planilha de cálculos do autor (não constam na Tab. 4.13); ciclo de religamento adotado igual ao dos alimentadores da SE AQZ.',
+        ref: 'Planilha do TCC, abas "SE ESB" e "Dimensionamento TC e TP"; ciclo pela Tab. 4.11',
+        origin: 'planilha',
       },
       '21S1': {
-        rtc: 100, cycle: '1I+2T', deadTime: 10,
+        rtc: 500, cycle: '1I+2T', deadTime: 10,
         groups: one(P(570, 0.20, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
-        ref: 'Planilha de cálculos do TCC, aba ESB21S1',
-        assumed: 'Ajustes da planilha de cálculos do autor (não constam na Tab. 4.13); ciclo de religamento adotado igual ao dos alimentadores da SE AQZ.',
+        ref: 'Planilha do TCC, abas "SE ESB" e "Dimensionamento TC e TP"; ciclo pela Tab. 4.11',
+        origin: 'planilha',
       },
       '21I2': {
-        rtc: 160, cycle: '1I+2T', deadTime: 10,
+        rtc: 300, cycle: '1I+2T', deadTime: 10,
         groups: one(P(570, 0.14, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
-        ref: 'Planilha de cálculos do TCC, aba AGF01I2',
-        assumed: 'Ajustes da planilha de cálculos do autor (não constam na Tab. 4.13); ciclo de religamento adotado igual ao dos alimentadores da SE AQZ.',
+        ref: 'Planilha do TCC, abas "SE AGF" e "Dimensionamento TC e TP"; ciclo pela Tab. 4.11',
+        origin: 'planilha',
       },
       // Fase: planilha (aba AGF01I2). Neutro e religamento: critérios da Tab. 4.12
       // (51N = 51N da retaguarda - 2 A; 50N = 480 A no primeiro religador; 3I; +1 s).
+      // O 51N da planilha (71,1 A) segue um critério anterior e deixaria RS7 menos
+      // sensível que 21I2 (24 A).
       RS7: {
         rtc: 300, cycle: '3I', deadTime: 11,
         groups: one(P(513, 0.05, 1262.1, 0.05), P(22, 0.21, 480, 0.05), 'Grupo único (planilha + Tab. 4.12)'),
-        ref: 'Planilha de cálculos do TCC (fase) e critérios da Tab. 4.12 (neutro e 79)',
-        assumed: 'RS7 não consta na Tab. 4.13. Fase pela planilha do autor; o 51N da planilha (71,1 A) usa o critério antigo e ficaria menos sensível que o de 21I2 (24 A), por isso o neutro e o religamento seguem os critérios da Tab. 4.12.',
+        ref: 'Planilha do TCC, aba AGF01I2 (fase); critérios da Tab. 4.12 (neutro e 79)',
+        origin: 'planilha',
+      },
+    },
+
+    // Conjunto extra: ajustes implementados em campo (Anexo B do TCC, fontes:
+    // Vieira, 2015, e OAP da COELCE). O Anexo B não informa os atrasos do 50/50N
+    // (a coluna "Ajuste 50/50N (s)" traz correntes em A): nos alimentadores da SE AQZ
+    // usa-se 0,1 s da OAP 165/2013; nos religadores de linha, os atrasos da Tab. 4.13.
+    // Tempos mortos e RTC iguais aos da base. ESB, AGF e RS7 não constam do Anexo B.
+    settingsSets: {
+      anexoB: {
+        name: 'Anexo B (ajustes de campo)',
+        note: 'Ajustes de campo do Anexo B. Atrasos do 50/50N: 0,1 s nos alimentadores da SE AQZ (OAP 165/2013) e os da Tab. 4.13 nos religadores de linha, porque o Anexo B não os informa. 21S7, 21S1, 21I2 e RS7 mantêm os ajustes da base.',
+        relays: (() => {
+          const fd = () => ({ rtc: 500, cycle: '1I+2T', deadTime: 10, groups: one(P(500, 0.26, 5000, 0.10), P(26, 0.64, 3500, 0.10), 'Campo (Anexo B)'), ref: 'Anexo B; atraso do 50 pela OAP 165/2013' });
+          const ln = (cycle, deadTime, ph, gr) => ({ rtc: 300, cycle, deadTime, groups: one(ph, gr, 'Campo (Anexo B)'), ref: 'Anexo B; atraso do 50 adotado da Tab. 4.13' });
+          return {
+            '21I7': fd(), '21I6': fd(), '21I5': fd(), '21I4': fd(),
+            RS1: ln('3I', 11, P(450, 0.18, 2800, 0.05), P(24, 0.28, 480, 0.05)),
+            RS2: ln('3I', 11, P(450, 0.17, 2900, 0.05), P(24, 0.30, 360, 0.05)),
+            RS3: ln('1I', 13, P(360, 0.05, 1500, 0.01), P(20, 0.09, 90, 0.01)),
+            RS4: ln('3I', 11, P(320, 0.17, 2300, 0.05), P(24, 0.22, 480, 0.05)),
+            RS5: ln('3I', 11, P(450, 0.22, 1700, 0.05), P(24, 0.21, 450, 0.05)),
+            RS6: ln('2I', 12, P(400, 0.12, 1300, 0.02), P(22, 0.15, 190, 0.02)),
+            RL1: ln('2I', 12, P(400, 0.10, 1900, 0.03), P(22, 0.15, 170, 0.03)),
+            RL2: ln('2I', 12, P(320, 0.13, 1800, 0.03), P(22, 0.05, 200, 0.03)),
+            RL3: {
+              rtc: 300, cycle: '1I', deadTime: 13, ref: 'Anexo B (dois grupos, com ciclos diferentes); atrasos da Tab. 4.13',
+              groups: [
+                { id: 'G1', name: 'Grupo 1, alimentado por AQ6 (Anexo B)', when: { upstreamNode: 'RL3b' }, cycle: '1I', deadTime: 13, phase: P(360, 0.06, 1260, 0.02), ground: P(20, 0.09, 90, 0.02) },
+                { id: 'G2', name: 'Grupo 2, alimentado por AQ5 (Anexo B)', when: { upstreamNode: 'RL3a' }, cycle: '2I', deadTime: 12, phase: P(240, 0.05, 1900, 0.03), ground: P(22, 0.05, 200, 0.03) },
+              ],
+            },
+            RL4: ln('1I', 13, P(400, 0.12, 1300, 0.02), P(22, 0.15, 190, 0.02)),
+            // geral de barramento: 50/50N "BLOQUEADA" no campo
+            '01Z2': { rtc: 800, cycle: 'Bloqueado', deadTime: 10, groups: one(P(864, 0.24, 0, 0, 'NI'), P(148, 0.44, 0, 0, 'NI'), 'Campo (Anexo B)'), ref: 'Anexo B (50/50N bloqueados)' },
+          };
+        })(),
       },
     },
 
@@ -223,6 +266,45 @@
       sourceForPath: 'AQZ',
       // Planilha de cálculos do TCC, aba "Z(pu) Acumulado e curtocircuito":
       // [fonte, alimentador, barra, trechos a partir da fonte, Icc3F, Icc2F, IccFT, IccFTm]
+      // Configurações de alcance máximo de cada alimentador (Fig. 4.6 e Tab. 4.8;
+      // para ESB e AGF, aba "Dimensionamento TC e TP" da planilha do autor)
+      reach: {
+        '21I7': { RL1: true, '21S7': false },
+        '21I6': { RL2: true, '21S1': false, RL3: true, RS4: false },
+        '21I5': { RL3: true, '21S1': false },
+        '21I4': { RL4: true, RS7: false },
+        '21S7': { RL1: true, '21I7': false },
+        '21S1': { RL2: true, RL3: true, RS4: false, '21I6': false },
+        '21I2': { RL4: true, RS6: false },
+      },
+      // Tab. 4.8 (e aba "Dimensionamento TC e TP" para ES7, ES1, AG2 e RS7):
+      // [relé, Iccmax (A), Icarga máx (A), Ipick-up máx (A), RTC]
+      tab48: [
+        ['21I7', 10175.6, 260, 570, 500], ['21I6', 10175.6, 344, 570, 500], ['21I5', 10175.6, 300, 570, 500], ['21I4', 10175.6, 334, 570, 500],
+        ['RS1', 2967.474, 237, 513, 300], ['RS2', 2574.884, 323, 513, 300], ['RS3', 5832.799, 155, 513, 300], ['RS4', 4715.065, 217, 315, 300],
+        ['RS5', 1620.953, 208, 513, 300], ['RS6', 1374.857, 166, 462, 300], ['RL1', 3692.656, 180, 462, 300], ['RL2', 3260.754, 217, 513, 300],
+        ['RL3', 2146.338, 155, 315, 300], ['RL4', 1374.526, 89, 462, 300],
+        ['21S7', 9069.5, 260, 570, 500], ['21S1', 9069.5, 344, 570, 500], ['21I2', 6191.7, 412, 570, 300], ['RS7', 1727.921, 166, 513, 300],
+      ],
+      // Aba "Impedâncias dos Trechos" da planilha: [r1, x1, r0, x0] em pu
+      planilhaZ: {
+        T1: [0.622958, 1.018951, 1.093135, 4.107329],
+        T2: [0.147087, 0.240586, 0.258101, 0.969786],
+        T3: [0.224957, 0.367954, 0.394743, 1.483202],
+        T4: [0.109439, 0.191226, 0.696470, 1.078308],
+        T5: [0.638408, 1.044222, 1.120247, 4.209197],
+        T6: [0.207900, 0.340055, 0.364812, 1.370740],
+        T7: [0.278106, 0.454889, 0.488007, 1.833629],
+        T8: [0.247082, 0.404143, 0.433567, 1.629078],
+        T9: [0.682579, 0.857601, 1.066371, 3.378551],
+        T10: [1.120678, 1.071573, 1.580034, 4.088869],
+        T11: [0.123677, 0.239569, 1.745213, 1.896798],
+        T12: [1.092046, 1.888165, 1.938739, 7.449697],
+        T13: [0.219671, 0.407034, 0.395987, 1.565176],
+        T14: [0.000349, 0.000646, 0.000629, 0.002484],
+        T15: [0.588229, 1.089947, 1.060366, 4.191193],
+        T16: [0.834992, 1.573219, 4.761411, 8.130519],
+      },
       planilha: [
         ['AQZ', '21I7', 'AQZ', [], 9419.390, 8157.431, 10175.632, 79.658],
         ['AQZ', '21I7', 'RS1', ['T1'], 2622.240, 2270.926, 1619.782, 78.412],
@@ -282,7 +364,8 @@
       { id: '21I5', source: 'AQZ', state: { RL3: true, '21S1': false }, bus: { dev: '01Z2' },
         devices: [{ dev: '21I5', at: [] }, { dev: 'RS4', at: ['T8'] }, { dev: 'RL3', at: ['T8', 'T9'] }],
         end: ['T8', 'T9', 'T10', 'T7'], endLabel: 'barra RL2' },
-      { id: '21I4', source: 'AQZ', state: { RL4: true, '21I2': false }, bus: { dev: '01Z2' },
+      // Fig. 4.6(d): o alcance de 21I4 termina em RS7 (aberto); com T16 a corrente iria a 580 A > 438 A
+      { id: '21I4', source: 'AQZ', state: { RL4: true, RS7: false }, bus: { dev: '01Z2' },
         devices: [{ dev: '21I4', at: [] }, { dev: 'RS5', at: ['T12'] }, { dev: 'RS6', at: ['T12', 'T13'] }, { dev: 'RL4', at: ['T12', 'T13', 'T14'] }],
         end: ['T12', 'T13', 'T14', 'T15'], endLabel: 'barra RS7' },
     ],
@@ -290,12 +373,17 @@
     // Premissas e divergências encontradas na fonte (exibidas na aba "Fontes")
     notes: [
       { kind: 'premissa', text: 'Carga de T7, T10 e T11: a Tab. 4.2 informa apenas o total (155 A); o rateio foi feito proporcionalmente ao comprimento.' },
-      { kind: 'premissa', text: 'Ajustes de 21S7, 21S1 (SE ESB), 21I2 (SE AGF) e RS7 não constam na Tab. 4.13. Foram usados os valores calculados pelo autor na planilha de cálculos do TCC; o neutro e o religamento de RS7 seguem os critérios da Tab. 4.12. O ciclo de religamento dos alimentadores de ESB e AGF não é informado e foi adotado igual ao dos alimentadores da SE AQZ.' },
+      { kind: 'premissa', text: 'Base do simulador: topologia da Fig. 4.2 e ajustes da Tab. 4.13. Relés fora da Tab. 4.13 (21S7 e 21S1 da SE ESB, 21I2 da SE AGF e RS7) usam os cálculos do autor na planilha do TCC: abas "SE ESB" e "SE AGF" (51, 50, 51N, 50N e ciclo 1I+2T com tempo morto de 10 s, o mesmo critério da Tab. 4.11 para religadores de SE) e "Dimensionamento TC e TP" (RTC). O neutro e o religamento de RS7 seguem a Tab. 4.12.' },
       { kind: 'premissa', text: 'Os arquivos do ProteCAD da pasta do TCC (fev/2015) trazem uma iteração anterior do estudo, com ajustes de linha diferentes da Tab. 4.13 (por exemplo RS4 com 513 A e RL3 com 462 A). O simulador usa a Tab. 4.13 e a planilha, que concordam entre si.' },
       { kind: 'premissa', text: 'Impedâncias equivalentes das SEs ESB e AGF retiradas do relatório ANAFAS (Anexo A) para os cálculos com recomposição.' },
       { kind: 'premissa', text: 'Proteção geral de barramento (01Z1/01Z2) modelada como um único equivalente que enxerga toda a corrente de falta da SE AQZ, como nos cálculos do TCC.' },
       { kind: 'divergencia', text: 'Fig. 4.2 indica T9 = 3.664 m, mas a Tab. 4.5 soma 4.114 m (3.173 + 941), valor coerente com a impedância da Tab. 4.6. O simulador usa a Tab. 4.5.' },
       { kind: 'divergencia', text: 'Fig. 4.6(c) indica Icc2F = 972,7 A na barra RL2 (21I5); a Tab. 4.7 e a relação √3/2·Icc3F dão 907,7 A.' },
+      { kind: 'divergencia', text: 'Fig. 4.6(d) indica IccFTm = 75,3 A na barra RS7; a Tab. 4.7 dá 75,6 A, valor que o simulador reproduz.' },
+      { kind: 'divergencia', text: 'RL3 alimentado por 21I5 (grupo 2): a Tab. 4.13 dá ciclo "1I" (sem religamento), mas o critério da Tab. 4.12 (um instantâneo a menos que o religador protegido, RS4 com 3I) leva a "2I", que é também o valor do Anexo B (campo) e do relé ensaiado (E79 = 1). O simulador segue a Tab. 4.13 na base e o Anexo B no conjunto extra.' },
+      { kind: 'divergencia', text: 'Planilha de cálculos, aba "SE AQZ": 50/50N da proteção geral de barra em 4.707 A e 5.090 A e dial do 51N em 0,356; a Tab. 4.13 e o relé ensaiado usam 4.079 A (50% do curto bifásico) e dial 0,30. O simulador usa a Tab. 4.13.' },
+      { kind: 'divergencia', text: 'Anexo B: a coluna "Ajuste 50/50N (s)" traz correntes em ampères (por exemplo 5000 e 3500), e não tempos. Os atrasos do 50/50N não são informados.' },
+      { kind: 'divergencia', text: 'Tab. 4.8: nos alimentadores da SE AQZ, Icc/FS = 509 A supera o primário do TC escolhido (500 A) em 1,8%.' },
       { kind: 'divergencia', text: 'Ciclo "1I+2T" (Tab. 4.13 e OAP 165/2013 de campo, com tempo morto 10-10 s e rearme de 45 s) versus o laboratório: o arquivo de ajustes do SEL-751 usado nos ensaios tem E79 = 3 e 50P1TC com "AND (SH0 OR SH1)", isto é, 2 operações instantâneas e 2 temporizadas. O preset do ensaio 5.6.1 reproduz a versão do laboratório.' },
       { kind: 'divergencia', text: 'RL2 do laboratório (RL3 no campo) foi ensaiado com 50P1D = 0,02 s e E79 = 1 (tempo morto 12 s), contra 0,03 s e "1I" (sem religamento) na Tab. 4.13. Os presets dos ensaios 5.7.3 usam o valor do laboratório.' },
       { kind: 'divergencia', text: 'Planilha de cálculos: os pickups de neutro dos religadores de linha (65,1 A, 71,1 A, 54 A) seguem um critério anterior; a Tab. 4.13 e os relés ensaiados usam 20 a 24 A. Os dials de neutro da planilha coincidem com a Tab. 4.13.' },

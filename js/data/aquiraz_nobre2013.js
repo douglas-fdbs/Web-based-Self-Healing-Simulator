@@ -55,7 +55,7 @@
 
   const scn = {
     id: 'nobre2013',
-    name: 'Primeira topologia (Fig. 4.1)',
+    name: 'Fig. 4.1: primeira topologia (extra, Nobre 2013)',
     longName: 'Sistema de distribuição Aquiraz, primeira topologia da Fig. 4.1 (dados de Nobre, 2013)',
     reference: 'NOBRE (2013), Cap. 3 e 4; RODRIGUES (2015), Fig. 4.1',
     base: { mva: 100, kv: 13.8 },

@@ -62,11 +62,23 @@ Resumo (detalhes em [`docs/VALIDACAO.md`](docs/VALIDACAO.md), gerado por `node t
 | Ensaios do Cap. 5 contra os relatórios da mala (18 ensaios) | mesmos comportamentos; tempos de trip e intervalos entre GOOSEs a até 12 ms dos medidos, com o processamento do relé calibrado em 13 ms |
 | Ensaios de sobrecorrente do Apêndice A (40 pontos I × t, 4 relés) | curvas a até 1,7% e tempo definido a até 10 ms dos medidos |
 | Religamentos do Apêndice B (AQZ, RL1, RL2 e AQZ + RL1) | mesmo número e tipo de aberturas e mesmo intervalo trip → religamento |
+| Tab. 4.8 (curto e carga máximos de 18 relés, incluindo ESB, AGF e RS7 pela planilha) | iguais; carga com diferença nula e curto com erro máximo de 0,01% |
+| Impedâncias dos 16 trechos contra a planilha do autor | diferença máxima de 0,5 × 10⁻⁴ pu |
 | Pontos críticos de coordenação da seção 4.7.3 | os três reproduzidos pela verificação de critérios e pela simulação; nenhum par descoordenado com a solução proposta no TCC |
 
-## Figura 4.1 ou Figura 4.2
+## Base: Fig. 4.2 e Tab. 4.13; extras
 
-O pedido inicial citou a "figura 4.1: Sistema de distribuição Aquiraz". No TCC, a Fig. 4.1 é a *primeira* topologia (de Nobre, 2013), mostrada apenas como histórico e sem dados elétricos; todos os cálculos, ajustes e ensaios IEC 61850 do TCC usam a topologia da Fig. 4.2. Por isso a rede da Fig. 4.2 é a padrão, e a da Fig. 4.1 foi incluída com os dados de Nobre (2013). As duas usam o mesmo motor de simulação.
+A base do simulador é a que o TCC documenta como final:
+
+- **Topologia:** Fig. 4.2, com as SEs Aquiraz II (230/69 kV, a montante da SE AQZ) e Eusébio (69/13,8 kV). Todos os cálculos, ajustes e ensaios do TCC usam essa rede.
+- **Ajustes:** Tab. 4.13. Os relés que ficam fora dela (21S7 e 21S1 da SE ESB, 21I2 da SE AGF e RS7) usam os cálculos do autor na planilha do TCC, com o ciclo 1I+2T e tempo morto de 10 s da Tab. 4.11 e das abas "SE ESB" e "SE AGF".
+- **Esquema convencional:** 50/50N da proteção geral de barra bloqueado, como descreve a seção 3.3.2.
+
+Extras, para comparação, sem substituir a base:
+
+- **Fig. 4.1** (primeira topologia, com os dados de Nobre, 2013), no seletor de topologia;
+- **Anexo B** (ajustes de campo), no seletor da aba *Proteção*. O Anexo B não informa os atrasos do 50/50N: usam-se 0,1 s nos alimentadores (OAP 165/2013) e os atrasos da Tab. 4.13 nos religadores de linha;
+- **ajustes do laboratório** (arquivo do SEL-751), só nos presets da aba *Ensaios*.
 
 ## Estrutura
 
@@ -95,7 +107,7 @@ Os arquivos de `js/core` e `js/data` funcionam tanto no navegador quanto no Node
 As premissas adotadas onde as fontes não informam o dado aparecem na aba *Fontes* e em [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md). As principais:
 
 - carga dos trechos T7, T10 e T11 (a Tab. 4.2 informa só o total de 155 A) rateada pelo comprimento;
-- ajustes dos alimentadores das SEs ESB e AGF e do religador RS7 (fora da Tab. 4.13) tirados da planilha de cálculos do autor e dos critérios da Tab. 4.12; o ciclo de religamento desses alimentadores foi adotado igual ao dos alimentadores da SE AQZ;
+- ajustes dos alimentadores das SEs ESB e AGF e do religador RS7 (fora da Tab. 4.13) tirados da planilha de cálculos do autor e dos critérios das Tabs. 4.11 e 4.12;
 - rede radial, correntes de carga somadas em módulo e queda de tensão aproximada (informativa);
 - tempos fixos de interrupção do disjuntor (50 ms) e de transferência GOOSE (3 ms); processamento do relé de 0 ms na simulação livre (cálculo ideal, como no TCC) e de 13 ms nos ensaios, ajustável na aba *Proteção*;
 - relés não direcionais, como o SEL-751 nos ensaios do TCC.

@@ -254,6 +254,19 @@
         el('span', { class: 'v', text: f ? `${fmt.num(I, 0)}/${s.amp}` : 'sem tensão' })));
     });
     const vmin = Object.entries(flows.volt).reduce((a, b) => (b[1] < a[1] ? b : a), ['', 1]);
+    if (SH.coordination && scn.validation && scn.validation.tab48 && app.settingsSet === 'base') {
+      const rows = SH.coordination.ctCheck(model);
+      root.append(el('div', { class: 'stack' },
+        el('span', { class: 'eyebrow', text: 'Conferência com a Tab. 4.8 (curto e carga máximos por relé)' }),
+        el('p', { class: 'small muted', text: 'Curto máximo: maior entre 3F e FT na barra do relé, entre todas as fontes que podem alimentá-la. Carga máxima: maior corrente pelo relé nas configurações de alcance máximo (Fig. 4.6). ESB, AGF e RS7 conferidos com a aba "Dimensionamento TC e TP" da planilha.' }),
+        el('div', { class: 'table-wrap' }, el('table', {},
+          el('thead', {}, el('tr', {}, ['Relé', 'Icc sim.', 'Icc TCC', 'Carga sim.', 'Carga TCC', 'RTC'].map((h, i) => el('th', { class: i ? '' : 'l', text: h })))),
+          el('tbody', {}, rows.map((r) => el('tr', {},
+            el('td', { class: 'l', text: app.swLabel(r.dev) }),
+            el('td', { text: fmt.num(r.icc, 0) }), el('td', { text: fmt.num(r.iccRef, 0) }),
+            el('td', { text: fmt.num(r.ic, 0) }), el('td', { text: fmt.num(r.icRef, 0) }),
+            el('td', { text: String(r.rtc) }))))))));
+    }
     root.append(el('div', { class: 'stack' },
       el('span', { class: 'eyebrow', text: 'Carregamento dos trechos (A / ampacidade)' }),
       el('p', { class: 'small muted', text: `Instante exibido: ${fmt.evt(app.pt)}. Carga suprida ${fmt.amp(flows.served)} · sem suprimento ${fmt.amp(flows.unserved)}.` }),
@@ -355,9 +368,11 @@
       const P = g.phase || {};
       const Ng = g.ground || {};
       const tr = el('tr', { class: `clickable ${app.editRelay === w.relay ? 'active' : ''}`, onclick: () => { app.editRelay = app.editRelay === w.relay ? null : w.relay; app.renderPanel(); } },
-        el('td', { class: 'l' }, w.label || w.id, cfg.assumed ? el('span', { class: 'ref', text: 'assumido' }) : null, app.edited[w.relay] ? el('span', { class: 'ref', text: 'editado' }) : null),
+        el('td', { class: 'l' }, w.label || w.id, cfg.assumed ? el('span', { class: 'ref', text: 'assumido' }) : null,
+          cfg.origin === 'planilha' ? el('span', { class: 'ref', title: cfg.ref || '', text: 'planilha' }) : null,
+          app.edited[w.relay] ? el('span', { class: 'ref', text: 'editado' }) : null),
         el('td', { text: String(cfg.rtc) }),
-        el('td', { text: typeof cfg.cycle === 'string' ? cfg.cycle : PR.cycleLabel(cfg.cycle) }),
+        el('td', { text: ((c) => (typeof c === 'string' ? c : PR.cycleLabel(c)))(PR.cycleOf(cfg, g)) }),
         el('td', { text: `${fmt.num(P.pickup, P.pickup % 1 ? 1 : 0)} / ${fmt.num(P.dial, 2)} ${P.curve || ''}` }),
         el('td', { text: P.inst ? `${fmt.num(P.inst, 0)} / ${fmt.num((P.instDelay || 0) * 1000, 0)}` : '-' }),
         el('td', { text: `${fmt.num(Ng.pickup, Ng.pickup % 1 ? 1 : 0)} / ${fmt.num(Ng.dial, 2)}` }),
@@ -365,9 +380,16 @@
         el('td', { text: cfg.groups.length > 1 ? g.id : '' }));
       return tr;
     });
+    const sets = model.scn.settingsSets || {};
+    const setIds = Object.keys(sets);
+    const setToggle = setIds.length ? el('div', { class: 'seg-toggle', role: 'group', 'aria-label': 'Conjunto de ajustes' },
+      el('button', { type: 'button', 'aria-pressed': app.settingsSet === 'base' ? 'true' : 'false', onclick: () => app.setSettingsSet('base') }, 'Tab. 4.13 (base)'),
+      ...setIds.map((k) => el('button', { type: 'button', 'aria-pressed': app.settingsSet === k ? 'true' : 'false', onclick: () => app.setSettingsSet(k) }, `${sets[k].name.split(' (')[0]} (extra)`))) : null;
     root.append(el('div', { class: 'stack' },
-      el('span', { class: 'eyebrow', text: `Ajustes (${model.scn.reference})` }),
-      el('p', { class: 'small muted', text: '51: pickup (A) / dial e curva; 50: pickup (A) / atraso (ms). Clique em uma linha para editar o grupo ativo.' }),
+      el('span', { class: 'eyebrow', text: `Ajustes: ${app.settingsSetLabel()}` }),
+      setToggle,
+      setIds.length && app.settingsSet !== 'base' && sets[app.settingsSet] ? el('div', { class: 'callout warn', text: `Conjunto extra, para comparação: ${sets[app.settingsSet].note}` }) : null,
+      el('p', { class: 'small muted', text: '51: pickup (A) / dial e curva; 50: pickup (A) / atraso (ms). Clique em uma linha para editar o grupo ativo. "planilha": relé fora da Tab. 4.13, com ajustes da planilha de cálculos do autor.' }),
       el('div', { class: 'table-wrap' }, el('table', {},
         el('thead', {}, el('tr', {}, ['Relé', 'RTC', 'Ciclo', '51P', '50P', '51N', '50N', 'Grupo'].map((h, i) => el('th', { class: i === 0 ? 'l' : '', text: h })))),
         el('tbody', {}, rows)))));
@@ -425,11 +447,13 @@
       el('p', { class: 'small muted', text: 'Tempos e margens em ms.' }),
       el('button', { type: 'button', class: 'btn', onclick: () => { app.critAll = !showAll; app.renderPanel(); } }, showAll ? 'Mostrar só os pares fora do critério' : 'Mostrar todos os pares'),
       el('div', { class: 'table-wrap' }, el('table', {},
-        el('thead', {}, el('tr', {}, ['Relé', 'Barra remota', 'M fase (2F ≥ 2,4)', 'M neutro (FT ≥ 4,0)'].map((h, i) => el('th', { class: i < 2 ? 'l' : '', text: h })))),
+        el('thead', {}, el('tr', {}, ['Relé e barra remota', 'M fase', 'M neutro', '51P na barra'].map((h, i) => el('th', { class: i < 1 ? 'l' : '', text: h })))),
         el('tbody', {}, res.sensitivity.map((x) => el('tr', {},
-          el('td', { class: 'l', text: lbl(x.dev) }), el('td', { class: 'l', text: x.remote }),
+          el('td', { class: 'l', style: { whiteSpace: 'normal' } }, lbl(x.dev), el('br'), el('span', { class: 'small muted', text: x.remote })),
           el('td', { style: { color: x.okPhase ? null : 'var(--crit)' }, text: x.mPhase != null ? fmt.num(x.mPhase, 2) : '-' }),
-          el('td', { style: { color: x.okGround ? null : 'var(--crit)' }, text: x.mGround != null ? fmt.num(x.mGround, 1) : '-' })))))));
+          el('td', { style: { color: x.okGround ? null : 'var(--crit)' }, text: x.mGround != null ? fmt.num(x.mGround, 1) : '-' }),
+          el('td', { style: { whiteSpace: 'normal' }, text: x.t51P != null ? `${fmt.num(x.t51P * 1000, 0)} (alvo ${fmt.num(x.t51Target * 1000, 0)})` : '-' })))))),
+      el('p', { class: 'small muted', text: 'Múltiplo mínimo: 2,4 na fase (curto bifásico) e 4,0 no neutro (curto fase-terra) na primeira barra remota. 51P na barra: tempo da curva com falta trifásica na barra do próprio relé, em ms; o alvo é 200 ms nos religadores da SE (Tab. 4.11) e 100 ms ao longo do alimentador (Tab. 4.12). Os religadores de linha com dial 0,05 já estão no mínimo do relé.' }));
   }
 
   function editForm(app, relayId) {
@@ -452,8 +476,10 @@
       fields.push({ part, key, input });
       return el('label', { class: 'field', for: id }, el('span', { text: label }), input);
     };
-    const cyc = el('input', { type: 'text', id: 'ed_cycle', value: typeof cfg.cycle === 'string' ? cfg.cycle : PR.cycleLabel(cfg.cycle), style: { width: '100%' } });
-    const dead = el('input', { type: 'number', id: 'ed_dead', step: 0.5, value: Array.isArray(cfg.deadTime) ? cfg.deadTime[0] : cfg.deadTime, style: { width: '100%' } });
+    const cycV = PR.cycleOf(cfg, g);
+    const deadV = PR.deadOf(cfg, g);
+    const cyc = el('input', { type: 'text', id: 'ed_cycle', value: typeof cycV === 'string' ? cycV : PR.cycleLabel(cycV), style: { width: '100%' } });
+    const dead = el('input', { type: 'number', id: 'ed_dead', step: 0.5, value: Array.isArray(deadV) ? deadV[0] : deadV, style: { width: '100%' } });
     const box = el('div', { class: 'stack card', style: { padding: '10px' } },
       el('h3', { text: `Editar ${app.model.switches[relayId] ? (app.model.switches[relayId].label || relayId) : relayId} · ${g.name}` }),
       el('div', { class: 'grid2' },

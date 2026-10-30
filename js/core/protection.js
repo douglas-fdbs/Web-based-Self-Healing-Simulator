@@ -81,9 +81,22 @@
   };
 
   /** Estado dinâmico de um relé durante a simulação. */
+  /** Ciclo e tempo morto efetivos: o grupo ativo pode ter os seus (ex.: RL3 no Anexo B). */
+  function cycleOf(cfg, group) { return (group && group.cycle) || cfg.cycle; }
+  function deadOf(cfg, group) { return group && group.deadTime != null ? group.deadTime : cfg.deadTime; }
+  function buildDead(ops, d) {
+    return Array.isArray(d) ? d.slice() : new Array(Math.max(ops.length - 1, 0)).fill(d || 10);
+  }
+  /** Reaplica ciclo e tempo morto do grupo ativo (só fora de um ciclo de religamento). */
+  function applyGroupCycle(rt) {
+    if (rt.shot !== 0) return;
+    rt.ops = parseCycle(cycleOf(rt.cfg, rt.group));
+    rt.dead = buildDead(rt.ops, deadOf(rt.cfg, rt.group));
+  }
+
   function createRelayRuntime(id, cfg, group) {
-    const ops = parseCycle(cfg.cycle);
-    const dead = Array.isArray(cfg.deadTime) ? cfg.deadTime.slice() : new Array(Math.max(ops.length - 1, 0)).fill(cfg.deadTime || 10);
+    const ops = parseCycle(cycleOf(cfg, group));
+    const dead = buildDead(ops, deadOf(cfg, group));
     return {
       id,
       cfg,
@@ -228,7 +241,7 @@
   }
 
   const api = {
-    CURVES, ELEMENTS, EL_LABEL, curveTime, parseCycle, cycleLabel, createRelayRuntime,
+    CURVES, ELEMENTS, EL_LABEL, curveTime, parseCycle, cycleLabel, cycleOf, deadOf, applyGroupCycle, createRelayRuntime,
     updateRelay, resetElements, anyPickup, isBlocked, staticTime, selectGroup,
   };
   SH.protection = api;

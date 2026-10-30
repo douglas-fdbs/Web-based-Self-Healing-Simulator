@@ -1,6 +1,6 @@
 # Registro do desenvolvimento assistido por IA (Equipe 3, Claude)
 
-Registro factual das sessões de desenvolvimento, para subsidiar a comparação com o simulador da Equipe 2 (Gemini) no artigo. As seções 1 a 10 tratam da primeira sessão; a seção 11, da revisão feita com a pasta ARTIGO_REI; a seção 12, da auditoria de cobertura contra o TCC.
+Registro factual das sessões de desenvolvimento, para subsidiar a comparação com o simulador da Equipe 2 (Gemini) no artigo. As seções 1 a 10 tratam da primeira sessão; a seção 11, da revisão feita com a pasta ARTIGO_REI; a seção 12, da auditoria de cobertura contra o TCC; a seção 13, da definição da base.
 
 ## 1. Contexto
 
@@ -25,7 +25,7 @@ A extração de texto do Drive para o TCC parou no fim do Cap. 4. O PDF original
 
 ## 3. Decisão sobre a figura
 
-O pedido citou a "figura 4.1: Sistema de distribuição Aquiraz". No TCC, a Fig. 4.1 é a primeira topologia, apresentada como histórico e sem dados elétricos; a Fig. 4.2 é a topologia usada em todos os cálculos e ensaios. As duas foram implementadas, com a Fig. 4.2 como padrão. A escolha precisa ser confirmada pela equipe.
+O pedido citou a "figura 4.1: Sistema de distribuição Aquiraz". No TCC, a Fig. 4.1 é a primeira topologia, apresentada como histórico e sem dados elétricos; a Fig. 4.2 é a topologia usada em todos os cálculos e ensaios. As duas foram implementadas, com a Fig. 4.2 como padrão. Na quarta sessão a equipe confirmou a Fig. 4.2 como base (seção 13).
 
 ## 4. Etapas
 
@@ -175,3 +175,43 @@ Arquivos que o conector do Drive não conseguiu baixar (acima de cerca de 6 MB):
 | Rede Ethernet redundante (Fig. 3.4b) | a perda de mensagens é simulada como total ou nula |
 | Capacidade dos transformadores na recomposição | o TCC não usa esse critério e faltam dados de ESB e AGF e dos três alimentadores de AQZ fora da rede inteligente |
 | Detecção mais lenta do 50 perto do pickup e recepção do GOOSE pela mala | diferenças de 6 a 23 ms nos tempos de eliminação e de 9 ms em um trip |
+
+## 13. Quarta sessão: base do simulador
+
+**Pedido:** usar como base o que o TCC documenta (Fig. 4.2 e seus ajustes), deixando o restante como extra; conferir os resultados com o TCC e os arquivos do autor; verificar o ciclo de religamento dos alimentadores de ESB e AGF.
+
+### 13.1 Conferência da base
+
+- Os 15 relés do simulador foram comparados valor a valor com a Tab. 4.13 (RTC, pickups, dials, 50/50N, atrasos, curvas e ciclos): todos iguais. A base já era a Tab. 4.13; o Anexo B não estava implementado.
+- O bloqueio do 50/50N da proteção de barra no esquema convencional tinha como referência o Anexo B. A referência passou a ser a seção 3.3.2 do TCC, que descreve esse bloqueio no esquema tradicional; na Tab. 4.13 o 50 aparece com 4.079 A e 100 ms, valor usado com seletividade lógica.
+- A Tab. 4.13 não lista tempos mortos. Os valores vêm do critério das Tabs. 4.11 e 4.12 (10 s na SE e +1 s por nível). O RL3 passou a ter 13 s no grupo 1 e 12 s no grupo 2, como o relé ensaiado.
+
+### 13.2 Alterações
+
+| Item | Antes | Agora |
+|---|---|---|
+| Anexo B | não implementado | conjunto extra selecionável na aba *Proteção*, com aviso; atrasos do 50/50N: 0,1 s nos alimentadores (OAP) e os da Tab. 4.13 nos religadores de linha |
+| Ciclo e tempo morto | por relé | por relé ou por grupo de ajuste |
+| RTC de 21S7, 21S1 e 21I2 | 120, 100 e 160 (valores provisórios das abas por alimentador) | 500, 500 e 300 (aba "Dimensionamento TC e TP") |
+| Ciclo de ESB e AGF | marcado como adotado | documentado: critério da Tab. 4.11 e abas "SE ESB" e "SE AGF" da planilha (1I+2T, 10 s) |
+| Alcance máximo de 21I4 | até a SE AGF (RS7 fechado, 21I2 aberto) | até RS7 aberto, como na Fig. 4.6(d); com T16 a corrente iria a 580 A, acima dos 438 A do cabo |
+| Rótulos | "Rede atual" e "Primeira topologia" | "Fig. 4.2: rede do TCC (base)" e "Fig. 4.1: primeira topologia (extra)" |
+
+A correção do alcance de 21I4 elimina a exceção relatada na seção 12.2: com a solução do TCC, todas as faltas das configurações de alcance máximo passam a ser seletivas.
+
+### 13.3 Novas conferências com o TCC e a planilha
+
+| Verificação | Resultado |
+|---|---|
+| Tab. 4.8: curto e carga máximos de 18 relés (14 da tabela e 4 da aba de TCs) | carga igual em todos; curto com erro máximo de 0,01% |
+| Impedâncias dos 16 trechos contra a aba "Impedâncias dos Trechos" | diferença máxima de 0,5 × 10⁻⁴ pu |
+| Sete configurações de alcance máximo | sem paralelismo e sem sobrecarga |
+| Tempo do 51 na própria barra (Tabs. 4.11 e 4.12) | 200 ms nos quatro religadores da SE e 97 ms em RS4; demais religadores de linha no dial mínimo (0,05) |
+
+### 13.4 Divergências registradas nesta sessão
+
+- RL3 alimentado por 21I5: "1I" na Tab. 4.13, contra "2I" pelo critério da Tab. 4.12, no Anexo B e no relé ensaiado.
+- Aba "SE AQZ" da planilha: 50/50N da barra em 4.707 A e 5.090 A e dial do 51N em 0,356, contra 4.079 A e 0,30 na Tab. 4.13 e no relé ensaiado.
+- Fig. 4.6(d): IccFTm de 75,3 A na barra RS7, contra 75,6 A na Tab. 4.7.
+- Anexo B: a coluna "Ajuste 50/50N (s)" traz correntes, e os atrasos não são informados.
+- Tab. 4.8: Icc/FS = 509 A nos alimentadores da SE AQZ, acima do primário de 500 A escolhido.

@@ -2,6 +2,12 @@
 
 Este documento descreve os modelos implementados, as equações usadas e as premissas adotadas onde as fontes não trazem o dado. As referências a tabelas e seções sem autor indicado são do TCC de Rodrigues (2015).
 
+## 0. Base e extras
+
+A base é a que o TCC documenta como final: topologia da Fig. 4.2 e ajustes da Tab. 4.13. Os relés fora da Tab. 4.13 (21S7, 21S1, 21I2 e RS7) usam os cálculos do autor na planilha do TCC. No esquema convencional, o 50/50N da proteção geral de barra fica bloqueado (seção 3.3.2). Ficam como extras, selecionáveis e identificados na interface: a Fig. 4.1 (Nobre, 2013), os ajustes de campo do Anexo B e os ajustes do laboratório, estes só nos presets de ensaio.
+
+Cada grupo de ajuste pode ter ciclo e tempo morto próprios. Isso é necessário para o RL3: na base, os tempos mortos seguem o nível na cadeia (13 s alimentado por 21I6 e 12 s por 21I5); no Anexo B, os ciclos também diferem (1I e 2I).
+
 ## 1. Modelo da rede
 
 A rede é um grafo com dois tipos de ramo:
@@ -104,8 +110,10 @@ O tempo avança de evento em evento. Tipos de evento: falta, trip de relé, cheg
 
 | Item | Premissa | Motivo |
 |---|---|---|
-| Carga de T7, T10 e T11 | rateio de 155 A pelo comprimento | a Tab. 4.2 só dá o total |
-| Ajustes de 21S7, 21S1 e 21I2 | planilha de cálculos do autor; ciclo de religamento igual ao dos alimentadores da SE AQZ | fora da Tab. 4.13 |
+| Carga de T7, T10 e T11 | rateio de 155 A pelo comprimento | a Tab. 4.2 só dá o total; a carga máxima por relé da Tab. 4.8 sai igual com qualquer rateio, porque os três trechos formam uma zona |
+| Tempos mortos dos religadores de linha | 10 s na SE e +1 s por nível, por cadeia (RL3: 13 s no grupo 1 e 12 s no grupo 2) | a Tab. 4.13 não lista tempos mortos; critério das Tabs. 4.11 e 4.12 |
+| Tempo de rearme do 79 | 45 s | o TCC não informa; valor da OAP 165/2013 e do relé AQZ ensaiado |
+| Ajustes de 21S7, 21S1 e 21I2 | planilha de cálculos do autor (abas "SE ESB", "SE AGF" e "Dimensionamento TC e TP"); ciclo 1I+2T e tempo morto de 10 s | fora da Tab. 4.13; ciclo pelo critério da Tab. 4.11, repetido nas abas da planilha |
 | Ajustes de RS7 | fase pela planilha; neutro e 79 pelos critérios da Tab. 4.12 (22 A, 3I, 11 s) | fora da Tab. 4.13; o 51N da planilha (71,1 A) segue critério antigo |
 | Ajustes de 21F3, 21M3 e 21I7 (AGF) em Nobre | iguais aos alimentadores da SE AQZ | não informados |
 | Conexão de RP1 e RP2 (Fig. 4.1) | meio dos trechos T1, T4 e T8 | diagrama de impedâncias não disponível |

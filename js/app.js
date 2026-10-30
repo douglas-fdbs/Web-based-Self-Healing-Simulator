@@ -77,6 +77,9 @@
   function loadScenario(id, keepPanel) {
     app.scnId = id;
     app.scnData = deepClone(SH.scenarios[id]);
+    // conjunto de ajustes: base (Tab. 4.13) ou extra (ex.: Anexo B, ajustes de campo)
+    const sets = app.scnData.settingsSets || {};
+    if (app.settingsSet && app.settingsSet !== 'base' && sets[app.settingsSet]) Object.assign(app.scnData.relays, deepClone(sets[app.settingsSet].relays));
     app.model = N.buildModel(app.scnData);
     app.stuck = new Set();
     app.sel = null;
@@ -104,9 +107,16 @@
 
   app.updateRelay = (relayId, gi, group, cycle, dead) => {
     const cfg = app.scnData.relays[relayId];
+    const old = cfg.groups[gi];
     cfg.groups[gi] = group;
-    if (cycle) cfg.cycle = cycle;
-    if (isFinite(dead) && dead > 0) cfg.deadTime = dead;
+    if (old.cycle || old.deadTime != null) {
+      // ciclo e tempo morto definidos no próprio grupo
+      if (cycle) group.cycle = cycle;
+      if (isFinite(dead) && dead > 0) group.deadTime = dead;
+    } else {
+      if (cycle) cfg.cycle = cycle;
+      if (isFinite(dead) && dead > 0) cfg.deadTime = dead;
+    }
     app.edited[relayId] = true;
     rebuildModelKeepState();
     app.renderPanel();
@@ -189,8 +199,20 @@
     }
   };
 
+  app.setSettingsSet = (v) => {
+    app.settingsSet = v;
+    SH.ui.storeSet('aqz-sh-set', v);
+    loadScenario(app.scnId, true);
+    app.renderPanel();
+  };
+  app.settingsSetLabel = () => {
+    const sets = (app.model && app.model.scn.settingsSets) || {};
+    return app.settingsSet !== 'base' && sets[app.settingsSet] ? sets[app.settingsSet].name : 'Tab. 4.13 (base do TCC)';
+  };
+
   app.runTest = (t) => {
-    if (app.scnId !== 'tcc2015') loadScenario('tcc2015', true);
+    // os ensaios partem da base (Tab. 4.13), com os ajustes do relé ensaiado
+    if (app.scnId !== 'tcc2015' || app.settingsSet !== 'base') { app.settingsSet = 'base'; SH.ui.storeSet('aqz-sh-set', 'base'); loadScenario('tcc2015', true); }
     app.cause = null;
     app.stuck = new Set(t.setup.stuck || []);
     const input = SH.labs.buildInput(app.model, t);
@@ -305,6 +327,7 @@
       kv('Sem suprimento', fmt.amp(snap.unserved), snap.unserved > 0 ? 'err-bad' : ''),
       res.test ? kv('Configuração', `ensaio ${res.test.ref.split(',')[0].replace('Seção ', '')}: ${res.test.title}`) : kv('Esquema', app.schemeLabel()),
       res.test ? null : kv('Self-healing', app.options.sra ? 'ligado' : 'desligado'),
+      res.test || app.settingsSet === 'base' ? null : kv('Ajustes', app.settingsSetLabel(), 'err-bad'),
     ].filter(Boolean));
     if (!normal) sb.append(el('button', { type: 'button', class: 'btn', style: { marginLeft: 'auto' }, onclick: () => app.reset() }, 'Voltar à operação normal'));
   }
@@ -446,6 +469,7 @@
       if (e.key === 'Escape') app.select(null);
     });
     syncHeader();
+    app.settingsSet = SH.ui.storeGet('aqz-sh-set', 'base') || 'base';
     const startScn = SH.ui.storeGet('aqz-sh-scn', 'tcc2015');
     loadScenario(SH.scenarios[startScn] ? startScn : 'tcc2015');
     requestAnimationFrame(loop);

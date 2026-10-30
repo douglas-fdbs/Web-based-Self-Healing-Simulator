@@ -222,6 +222,46 @@ test('Fig. 3.8: sem GOOSE de bloqueio, a supervisão da qualidade inibe o 50 de 
   assert.deepEqual(trips({ slQuality: false }).sort(), ['01Z2', '21I5']);
 });
 
+test('Planilha do TCC: impedâncias dos 16 trechos (aba "Impedâncias dos Trechos") iguais às do modelo', () => {
+  Object.entries(SH.scenarios.tcc2015.validation.planilhaZ).forEach(([t, ref]) => {
+    const z = tcc.segments[t];
+    [z.z1.re, z.z1.im, z.z0.re, z.z0.im].forEach((x, i) => assert.ok(Math.abs(x - ref[i]) < 1e-4, `${t} ${i}: ${x} x ${ref[i]}`));
+  });
+});
+
+test('Tab. 4.8: curto máximo e carga máxima de cada religador (18 linhas) e alcance máximo sem sobrecarga', () => {
+  SH.coordination.ctCheck(tcc).forEach((r) => {
+    assert.ok(relErr(r.icc, r.iccRef) < 1e-3, `${r.dev} Icc ${r.icc} x ${r.iccRef}`);
+    assert.ok(Math.abs(r.ic - r.icRef) < 0.5, `${r.dev} Icarga ${r.ic} x ${r.icRef}`);
+  });
+  Object.entries(SH.scenarios.tcc2015.validation.reach).forEach(([fd, mods]) => {
+    const st = N.normalState(tcc);
+    Object.entries(mods).forEach(([k, v]) => { st.sw[k].closed = v; });
+    const topo = N.analyze(tcc, st);
+    assert.equal(topo.conflicts.length, 0, fd);
+    assert.equal(N.checkLimits(tcc, topo, N.computeFlows(tcc, topo, {}), {}).overloads.length, 0, fd);
+  });
+});
+
+test('Tab. 4.13 x critérios: 51 dos religadores da SE atua em 0,2 s na própria barra (Tab. 4.11)', () => {
+  SH.coordination.check(tcc, {}).sensitivity.filter((x) => /^21I/.test(x.dev)).forEach((x) => {
+    assert.ok(Math.abs(x.t51P - 0.2) < 0.005 && Math.abs(x.t51N - 0.2) < 0.005, `${x.dev}: ${x.t51P} / ${x.t51N}`);
+  });
+});
+
+test('Anexo B (conjunto extra): ajustes de campo carregam e a simulação roda; RL3 muda de ciclo com o grupo', () => {
+  const scn = JSON.parse(JSON.stringify(SH.scenarios.tcc2015));
+  Object.assign(scn.relays, JSON.parse(JSON.stringify(scn.settingsSets.anexoB.relays)));
+  const m = N.buildModel(scn);
+  assert.equal(m.relays['21I5'].groups[0].phase.pickup, 500);
+  const st = N.normalState(m);
+  st.sw.RL3.closed = true; st.sw['21S1'].closed = false;
+  const res = SH.simulator.run(m, { state: st, script: [{ t: 0, type: 'fault', spec: { kind: 'segment', seg: 'T10', x: 0.5, type: '3F' } }], options: { sra: false } });
+  // RL3 alimentado por 21I5 usa o grupo 2 do Anexo B (2I): duas aberturas
+  assert.equal(res.log.filter((e) => e.cat === 'trip' && e.dev === 'RL3').length, 2);
+  assert.ok(res.log.some((e) => e.cat === 'trip'));
+});
+
 test('Seção 4.7.3: a verificação de critérios aponta os três pontos críticos do TCC', () => {
   const conv = SH.coordination.check(tcc, { busInst50: true });
   const st = (u, d, w, f) => conv.pairs.find((x) => x.up === u && x.down === d && x.where.startsWith(w) && x.fault === f).status;
