@@ -43,7 +43,7 @@ A referência principal é o TCC de Mário Sérgio de Lima Rodrigues (UFC, 2015)
 
 **Animação e análises.** Fluxo animado com a cor da subestação que alimenta cada trecho, câmera lenta automática nos transitórios de milissegundos e avanço rápido nos tempos mortos, arcos das mensagens GOOSE, contagem regressiva do religamento, linha do tempo e registro de eventos exportável em CSV. Painéis de curto-circuito com comparação ao TCC, carregamento por trecho, coordenograma tempo × corrente do caminho selecionado e edição dos ajustes.
 
-**Ensaios do Capítulo 5.** Os onze ensaios de laboratório do TCC (religamento, seletividade lógica e 50BF nos pares AQZ_MT/AQZ, AQZ/RL1 e RL1/RL2) podem ser executados na aba *Ensaios*, com o valor medido no TCC ao lado do valor simulado.
+**Ensaios do Capítulo 5.** Os onze ensaios de laboratório descritos no TCC e mais cinco ensaios fase-terra que só aparecem nos relatórios da mala de testes (religamento, seletividade lógica e 50BF nos pares AQZ_MT/AQZ, AQZ/RL1 e RL1/RL2) podem ser executados na aba *Ensaios*, com o valor citado no TCC, o valor medido no relatório da mala CE-6006 e o valor simulado.
 
 ## Validação
 
@@ -52,11 +52,12 @@ Resumo (detalhes em [`docs/VALIDACAO.md`](docs/VALIDACAO.md), gerado por `node t
 | Verificação | Resultado |
 |---|---|
 | Curtos 3F, 2F, FT e FTm nas 18 barras da Tab. 4.7 do TCC | maior erro de 0,061% |
+| Curtos da planilha de cálculos do TCC (42 barras, fontes AQZ, ESB e AGF) | maior erro de 0,0098% |
 | Impedâncias dos trechos a partir dos cabos (Tabs. 4.4 e 4.5 contra Tab. 4.6) | diferença máxima de 0,0006 pu |
 | Curtos da Tab. 3.6 de Nobre (2013) | maior erro de 0,0024% |
 | Recomposição para falta em cada trecho (Tab. 4.2 de Nobre) | 12 de 12 casos com as mesmas manobras |
 | Recomposição da Fig. 4.3 do TCC (falta em T1) | abre RS1 e fecha RL1, como no TCC |
-| Ensaios do Cap. 5 | mesmos comportamentos; tempos dezenas de ms abaixo dos medidos, pois o simulador não modela o processamento interno dos relés e da mala de testes |
+| Ensaios do Cap. 5 contra os relatórios da mala (16 ensaios) | mesmos comportamentos; tempos de trip e intervalos entre GOOSEs a até 12 ms dos medidos, com o processamento do relé calibrado em 13 ms |
 
 ## Figura 4.1 ou Figura 4.2
 
@@ -89,9 +90,9 @@ Os arquivos de `js/core` e `js/data` funcionam tanto no navegador quanto no Node
 As premissas adotadas onde as fontes não informam o dado aparecem na aba *Fontes* e em [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md). As principais:
 
 - carga dos trechos T7, T10 e T11 (a Tab. 4.2 informa só o total de 155 A) rateada pelo comprimento;
-- ajustes dos alimentadores das SEs ESB e AGF e do religador RS7 (fora do estudo do TCC) adotados iguais aos de dispositivos equivalentes, com destaque na interface;
+- ajustes dos alimentadores das SEs ESB e AGF e do religador RS7 (fora da Tab. 4.13) tirados da planilha de cálculos do autor e dos critérios da Tab. 4.12; o ciclo de religamento desses alimentadores foi adotado igual ao dos alimentadores da SE AQZ;
 - rede radial, correntes de carga somadas em módulo e queda de tensão aproximada (informativa);
-- tempos fixos de interrupção do disjuntor (50 ms) e de transferência GOOSE (3 ms);
+- tempos fixos de interrupção do disjuntor (50 ms) e de transferência GOOSE (3 ms); processamento do relé de 0 ms na simulação livre (cálculo ideal, como no TCC) e de 13 ms nos ensaios, ajustável na aba *Proteção*;
 - relés não direcionais, como o SEL-751 nos ensaios do TCC.
 
 Divergências encontradas nas próprias fontes (por exemplo, o comprimento de T9 na Fig. 4.2 e na Tab. 4.5) também estão listadas na aba *Fontes*.
@@ -101,6 +102,7 @@ Divergências encontradas nas próprias fontes (por exemplo, o comprimento de T9
 - RODRIGUES, M. S. de L. *Teste e validação das funções de proteção baseadas na norma IEC 61850 propostas para implantação no projeto piloto da rede de distribuição inteligente de Aquiraz*. Monografia (Graduação em Engenharia Elétrica), Universidade Federal do Ceará, Fortaleza, 2015.
 - NOBRE, F. W. de M. *Estudo para a definição dos grupos de ajuste da proteção da rede de distribuição Aquiraz*. Monografia (Graduação em Engenharia Elétrica), Universidade Federal do Ceará, Fortaleza, 2013.
 - VIEIRA, R. B. *Estudo das proteções para implantação no projeto piloto de redes inteligentes da Companhia Energética do Ceará em Aquiraz*. Monografia (Graduação em Engenharia Elétrica), Universidade Federal do Ceará, Fortaleza, 2015. (Citado no TCC como Vieira, 2015.)
+- Pasta ARTIGO_REI (Google Drive da equipe): planilha de cálculos do TCC, arquivo de ajustes dos relés SEL-751 dos ensaios, relatórios da mala Conprove CE-6006, OAP 165/2013 da SE AQZ e estudos do ProteCAD.
 - IEC 61850-5 e IEC 61850-8-1 (requisitos de comunicação e mapeamento GOOSE); IEC 60255-151 (curvas de tempo inverso).
 
 ## Licença

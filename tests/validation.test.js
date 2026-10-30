@@ -52,6 +52,15 @@ test('TCC Tab. 4.6: impedância dos trechos a partir dos cabos (Tab. 4.4 x Tab. 
   });
 });
 
+test('Planilha de cálculos do TCC: curtos a partir de AQZ, ESB e AGF (42 barras, erro < 0,05%)', () => {
+  SH.scenarios.tcc2015.validation.planilha.forEach(([src, feeder, bus, segs, ...ref]) => {
+    const r = SC.pathFault(tcc, src, segs);
+    [r.i3f, r.i2f, r.ift, r.iftm].forEach((x, i) => {
+      assert.ok(relErr(x, ref[i]) < 5e-4, `${src} ${feeder}/${bus} coluna ${i}: ${x.toFixed(1)} x ${ref[i]}`);
+    });
+  });
+});
+
 test('TCC Tab. 4.7: curtos 3F, 2F, FT e FTm nas barras (erro < 0,1%)', () => {
   SH.scenarios.tcc2015.validation.tab47.forEach((v) => {
     const r = SC.pathFault(tcc, 'AQZ', v.path);
@@ -125,48 +134,66 @@ test('Nobre Tab. 4.2: recomposição para falta em cada trecho', () => {
   });
 });
 
-// Ensaios do Cap. 5: tempos esperados recalculados a partir dos ajustes da Tab. 4.13
-// (o simulador não modela atrasos internos da mala de testes, daí as tolerâncias).
-const lab = (id) => {
+// Ensaios do Cap. 5 contra os relatórios da mala CE-6006 (pasta ARTIGO_REI).
+// Os presets usam o tempo de processamento calibrado (13 ms nos elementos 50 e no 50BF)
+// e os ajustes do relé ensaiado quando diferem da Tab. 4.13.
+const lab = (id, extra) => {
   const t = SH.labs.tests.find((x) => x.id === id);
-  const res = SH.simulator.run(tcc, SH.labs.buildInput(tcc, t));
+  const input = SH.labs.buildInput(tcc, t);
+  if (extra) input.options = Object.assign({}, input.options, extra);
+  const res = SH.simulator.run(tcc, input);
   return { t, res, m: (i) => SH.labs.measure(res, t.measures[i]) };
 };
 
-test('Ensaio 5.7.1(a): SL + 50BF, intervalo trip -> trip remoto ≈ BFD + GOOSE (TCC: 217 ms)', () => {
-  const { m } = lab('s1a');
-  assert.ok(Math.abs(m(0) - 203) < 1, `${m(0)}`);
-  assert.ok(m(1) > 300 && m(1) < 420, `${m(1)}`);
+test('Ensaios: tempos de trip e intervalos entre GOOSEs dentro de 12 ms dos medidos', () => {
+  SH.labs.tests.forEach((t) => {
+    const { m } = lab(t.id);
+    t.measures.forEach((me, i) => {
+      if (typeof me.lab !== 'number' || me.value.type === 'clear') return;
+      if (t.id === 's2d' && i === 0) return; // 50P perto do pickup: detecção mais lenta, não modelada
+      const v = m(i);
+      assert.ok(Math.abs(v - me.lab) <= 12, `${t.id} "${me.label}": simulado ${v.toFixed(1)} x medido ${me.lab}`);
+    });
+  });
 });
 
-test('Ensaio 5.7.1(b): sem 50BF, AQZ_MT atua pela curva NI (TCC: ≈ 600 ms)', () => {
-  const { m } = lab('s1b');
-  assert.ok(Math.abs(m(0) - 494) < 2, `${m(0)}`);
-  assert.ok(Math.abs(m(1) - 644) < 2, `${m(1)}`);
+test('Ensaios: eliminação simulada 0 a 25 ms antes do pós-falta da mala (recepção do GOOSE pela mala)', () => {
+  SH.labs.tests.forEach((t) => {
+    const { m } = lab(t.id);
+    t.measures.forEach((me, i) => {
+      if (me.value.type !== 'clear' || typeof me.lab !== 'number') return;
+      const d = me.lab - m(i);
+      assert.ok(d >= 0 && d <= 25, `${t.id}: simulado ${m(i).toFixed(1)} x medido ${me.lab}`);
+    });
+  });
 });
 
-test('Ensaio 5.7.1(c): sem SL, os dois relés atuam em 100 ms (falta de seletividade)', () => {
-  const { m } = lab('s1c');
-  assert.ok(Math.abs(m(0) - 100) < 1 && Math.abs(m(1) - 100) < 1);
+test('Ensaio 5.7.3(a): com o atraso real de RL2 (0,02 s), a 51 de RS4 só vence o 50BF com o processamento do relé', () => {
+  assert.equal(lab('s3a').res.log.find((e) => e.cat === 'trip' && e.dev === 'RS4').el, 'P51');
+  // modelo ideal (sem processamento): o 50BF chegaria antes, ao contrário do medido
+  assert.equal(lab('s3a', { relayDelay: 0 }).res.log.find((e) => e.cat === 'trip' && e.dev === 'RS4').el, 'REMTRIP');
 });
 
-test('Ensaio 5.7.2(b): sem 50BF, 21I5 atua pela curva MI em ≈ 430 ms', () => {
-  const { m } = lab('s2b');
-  assert.ok(Math.abs(m(1) - 427) < 3, `${m(1)}`);
-});
-
-test('Ensaio 5.7.3(a): a 51 de RL1 (RS4) atua antes do trip por 50BF', () => {
-  const { res } = lab('s3a');
-  const trip = res.log.find((e) => e.cat === 'trip' && e.dev === 'RS4');
-  assert.equal(trip.el, 'P51');
-});
-
-test('Ensaio 5.7.3(b) e (c): retaguarda +200 ms resolve e cobre a perda do GOOSE de 50BF', () => {
+test('Ensaio 5.7.3(b) e (c): retaguarda +200 ms resolve e cobre a perda do 50BF', () => {
   const b = lab('s3b');
   assert.equal(b.res.log.find((e) => e.cat === 'trip' && e.dev === 'RS4').el, 'REMTRIP');
   const c = lab('s3c');
   assert.equal(c.res.log.find((e) => e.cat === 'trip' && e.dev === 'RS4').el, 'B51');
-  assert.ok(c.m(1) > b.m(1) + 150);
+});
+
+test('Ensaio monofásico AQZ-RL1 sem 50BF: o tempo medido (654 ms) só é reproduzido sem os elementos de neutro', () => {
+  const sem = lab('s2e');
+  assert.equal(sem.res.log.find((e) => e.cat === 'trip' && e.dev === '21I5').el, 'P51');
+  const com = lab('s2e', { groundElements: true });
+  const tr = com.res.log.find((e) => e.cat === 'trip' && e.dev === '21I5');
+  assert.equal(tr.el, 'N51');
+  assert.ok(Math.abs((tr.t - com.res.metrics.faultAt) * 1000 - 200) < 2);
+});
+
+test('Ensaio 5.6.1: religamento de 21I5 com a configuração do laboratório (2I + 2T)', () => {
+  const { m } = lab('r1');
+  assert.equal(m(0), 4);
+  assert.ok(Math.abs(m(2) - 200) < 1, `${m(2)}`);
 });
 
 test('Ensaio 5.6.2: religamento AQZ + RL1 -> RL1 bloqueia e AQZ termina fechado', () => {

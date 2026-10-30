@@ -152,11 +152,36 @@
       },
       RL4: { rtc: 300, cycle: '1I', deadTime: 13, groups: one(P(416, 0.05, 1057, 0.02), P(20, 0.05, 120, 0.02)), ref: 'Tab. 4.13' },
       '01Z2': { rtc: 800, cycle: 'Bloqueado', deadTime: 10, groups: one(P(941, 0.20, 4079, 0.10, 'NI'), P(188, 0.30, 4079, 0.10, 'NI')), ref: 'Tab. 4.13 (geral de barramento)', inst50Scheme: true },
-      // Dispositivos fora do estudo do TCC: ajustes ilustrativos
-      '21S7': feederSettings('Ajuste não informado no TCC; adotado igual ao dos alimentadores da SE AQZ (Tab. 4.13).'),
-      '21S1': feederSettings('Ajuste não informado no TCC; adotado igual ao dos alimentadores da SE AQZ (Tab. 4.13).'),
-      '21I2': feederSettings('Ajuste não informado no TCC; adotado igual ao dos alimentadores da SE AQZ (Tab. 4.13).'),
-      RS7: { rtc: 300, cycle: '1I', deadTime: 13, groups: one(P(416, 0.05, 1057, 0.02), P(20, 0.05, 120, 0.02), 'Grupo adotado'), assumed: 'RS7 não consta na Tab. 4.13; adotados os ajustes de RL4.' },
+      // Dispositivos fora da Tab. 4.13: ajustes calculados pelo autor do TCC na
+      // planilha de cálculos (pasta ARTIGO_REI, abas ESB21S7, ESB21S1 e AGF01I2).
+      // O ciclo de religamento dessas SEs não é informado: adotado o dos
+      // alimentadores da SE AQZ (OAP 165/2013).
+      '21S7': {
+        rtc: 120, cycle: '1I+2T', deadTime: 10,
+        groups: one(P(570, 0.20, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
+        ref: 'Planilha de cálculos do TCC, aba ESB21S7',
+        assumed: 'Ajustes da planilha de cálculos do autor (não constam na Tab. 4.13); ciclo de religamento adotado igual ao dos alimentadores da SE AQZ.',
+      },
+      '21S1': {
+        rtc: 100, cycle: '1I+2T', deadTime: 10,
+        groups: one(P(570, 0.20, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
+        ref: 'Planilha de cálculos do TCC, aba ESB21S1',
+        assumed: 'Ajustes da planilha de cálculos do autor (não constam na Tab. 4.13); ciclo de religamento adotado igual ao dos alimentadores da SE AQZ.',
+      },
+      '21I2': {
+        rtc: 160, cycle: '1I+2T', deadTime: 10,
+        groups: one(P(570, 0.14, 2850, 0.10), P(24, 0.43, 2850, 0.10), 'Grupo único (planilha do autor)'),
+        ref: 'Planilha de cálculos do TCC, aba AGF01I2',
+        assumed: 'Ajustes da planilha de cálculos do autor (não constam na Tab. 4.13); ciclo de religamento adotado igual ao dos alimentadores da SE AQZ.',
+      },
+      // Fase: planilha (aba AGF01I2). Neutro e religamento: critérios da Tab. 4.12
+      // (51N = 51N da retaguarda - 2 A; 50N = 480 A no primeiro religador; 3I; +1 s).
+      RS7: {
+        rtc: 300, cycle: '3I', deadTime: 11,
+        groups: one(P(513, 0.05, 1262.1, 0.05), P(22, 0.21, 480, 0.05), 'Grupo único (planilha + Tab. 4.12)'),
+        ref: 'Planilha de cálculos do TCC (fase) e critérios da Tab. 4.12 (neutro e 79)',
+        assumed: 'RS7 não consta na Tab. 4.13. Fase pela planilha do autor; o 51N da planilha (71,1 A) usa o critério antigo e ficaria menos sensível que o de 21I2 (24 A), por isso o neutro e o religamento seguem os critérios da Tab. 4.12.',
+      },
     },
 
     // Elementos gráficos sem papel elétrico (barra de 69 kV e transformadores)
@@ -196,17 +221,66 @@
         { feeder: '21I4', bus: 'RS7', path: ['T12', 'T13', 'T14', 'T15'], tcc: [1.9141, 3.8297, 3.3957, 13.5538, 977.2, 846.3, 560.1, 75.6] },
       ],
       sourceForPath: 'AQZ',
+      // Planilha de cálculos do TCC, aba "Z(pu) Acumulado e curtocircuito":
+      // [fonte, alimentador, barra, trechos a partir da fonte, Icc3F, Icc2F, IccFT, IccFTm]
+      planilha: [
+        ['AQZ', '21I7', 'AQZ', [], 9419.390, 8157.431, 10175.632, 79.658],
+        ['AQZ', '21I7', 'RS1', ['T1'], 2622.240, 2270.926, 1619.782, 78.412],
+        ['AQZ', '21I7', 'RL1', ['T1', 'T2'], 2231.107, 1932.195, 1349.681, 78.107],
+        ['AQZ', '21I7', 'RS3', ['T1', 'T2', 'T3'], 1815.824, 1572.550, 1075.329, 77.633],
+        ['AQZ', '21I7', 'ESB', ['T1', 'T2', 'T3', 'T4'], 1657.630, 1435.550, 939.762, 77.147],
+        ['AQZ', '21I6', 'RS2', ['T5'], 2574.884, 2229.915, 1586.440, 78.380],
+        ['AQZ', '21I6', 'RL2', ['T5', 'T6'], 2070.689, 1793.269, 1242.248, 77.947],
+        ['AQZ', '21I6', 'T7', ['T5', 'T6', 'T7'], 1639.958, 1420.246, 962.725, 77.357],
+        ['AQZ', '21I6', '21S1', ['T5', 'T6', 'T7', 'T11'], 1483.220, 1284.506, 785.854, 76.331],
+        ['AQZ', '21I6', 'RL3', ['T5', 'T6', 'T7', 'T10'], 1034.464, 895.872, 620.230, 75.320],
+        ['AQZ', '21I6', 'RS4', ['T5', 'T6', 'T7', 'T10', 'T9'], 814.320, 705.222, 485.014, 73.965],
+        ['AQZ', '21I6', '21I5', ['T5', 'T6', 'T7', 'T10', 'T9', 'T8'], 745.685, 645.782, 440.663, 73.414],
+        ['AQZ', '21I5', 'RS4', ['T8'], 4715.065, 4083.366, 3309.202, 79.173],
+        ['AQZ', '21I5', 'RL3', ['T8', 'T9'], 2146.338, 1858.783, 1335.805, 77.882],
+        ['AQZ', '21I5', 'T10', ['T8', 'T9', 'T10'], 1209.049, 1047.067, 754.331, 75.874],
+        ['AQZ', '21I5', '21S1', ['T8', 'T9', 'T10', 'T11'], 1122.649, 972.242, 638.463, 74.872],
+        ['AQZ', '21I5', 'RL2', ['T8', 'T9', 'T10', 'T7'], 1048.125, 907.703, 641.499, 75.278],
+        ['AQZ', '21I5', 'RS2', ['T8', 'T9', 'T10', 'T7', 'T6'], 953.210, 825.504, 576.941, 74.827],
+        ['AQZ', '21I5', '21I6', ['T8', 'T9', 'T10', 'T7', 'T6', 'T5'], 745.685, 645.782, 440.663, 73.414],
+        ['AQZ', '21I4', 'RS5', ['T12'], 1620.953, 1403.787, 955.744, 77.400],
+        ['AQZ', '21I4', 'RS6', ['T12', 'T13'], 1374.857, 1190.661, 801.801, 76.910],
+        ['AQZ', '21I4', 'RL4', ['T12', 'T13', 'T14'], 1374.526, 1190.374, 801.596, 76.909],
+        ['AQZ', '21I4', 'RS7', ['T12', 'T13', 'T14', 'T15'], 977.174, 846.257, 560.078, 75.557],
+        ['AQZ', '21I4', 'AGF', ['T12', 'T13', 'T14', 'T15', 'T16'], 690.137, 597.676, 356.128, 72.033],
+        ['ESB', '21S7', 'ESB', [], 8170.925, 7076.228, 9069.526, 79.632],
+        ['ESB', '21S7', 'RS3', ['T4'], 5832.799, 5051.352, 4168.501, 79.162],
+        ['ESB', '21S7', 'RL1', ['T4', 'T3'], 3692.656, 3197.934, 2330.812, 78.716],
+        ['ESB', '21S7', 'RS1', ['T4', 'T3', 'T2'], 2967.474, 2569.908, 1809.238, 78.419],
+        ['ESB', '21S7', 'AQZ', ['T4', 'T3', 'T2', 'T1'], 1612.383, 1396.365, 928.863, 77.118],
+        ['ESB', '21S1', 'T11', ['T11'], 5450.902, 4720.620, 2925.517, 78.619],
+        ['ESB', '21S1', 'RL3', ['T11', 'T10'], 1877.550, 1626.006, 1082.212, 76.659],
+        ['ESB', '21S1', 'RS4', ['T11', 'T10', 'T9'], 1258.976, 1090.305, 728.552, 75.365],
+        ['ESB', '21S1', '21I5', ['T11', 'T10', 'T9', 'T8'], 1102.332, 954.648, 633.476, 74.843],
+        ['ESB', '21S1', 'RL2', ['T11', 'T7'], 3260.754, 2823.896, 1741.131, 78.066],
+        ['ESB', '21S1', 'RS2', ['T11', 'T7', 'T6'], 2496.752, 2162.250, 1335.625, 77.643],
+        ['ESB', '21S1', '21I6', ['T11', 'T7', 'T6', 'T5'], 1446.907, 1253.058, 778.236, 76.301],
+        ['AGF', '21I2', 'AGF', [], 6010.527, 5205.269, 6191.700, 79.658],
+        ['AGF', '21I2', 'RS7', ['T16'], 1727.921, 1496.423, 848.899, 76.290],
+        ['AGF', '21I2', 'RL4', ['T16', 'T15'], 1145.620, 992.136, 583.569, 74.987],
+        ['AGF', '21I2', 'RS6', ['T16', 'T15', 'T14'], 1145.391, 991.938, 583.460, 74.986],
+        ['AGF', '21I2', 'RS5', ['T16', 'T15', 'T14', 'T13'], 1017.081, 880.818, 522.392, 74.486],
+        ['AGF', '21I2', 'AQZ', ['T16', 'T15', 'T14', 'T13', 'T12'], 665.569, 576.400, 348.903, 71.975],
+      ],
     },
 
     // Premissas e divergências encontradas na fonte (exibidas na aba "Fontes")
     notes: [
       { kind: 'premissa', text: 'Carga de T7, T10 e T11: a Tab. 4.2 informa apenas o total (155 A); o rateio foi feito proporcionalmente ao comprimento.' },
-      { kind: 'premissa', text: 'Ajustes de 21S7, 21S1 (SE ESB), 21I2 (SE AGF) e RS7 não constam no TCC; foram adotados valores ilustrativos.' },
+      { kind: 'premissa', text: 'Ajustes de 21S7, 21S1 (SE ESB), 21I2 (SE AGF) e RS7 não constam na Tab. 4.13. Foram usados os valores calculados pelo autor na planilha de cálculos do TCC; o neutro e o religamento de RS7 seguem os critérios da Tab. 4.12. O ciclo de religamento dos alimentadores de ESB e AGF não é informado e foi adotado igual ao dos alimentadores da SE AQZ.' },
+      { kind: 'premissa', text: 'Os arquivos do ProteCAD da pasta do TCC (fev/2015) trazem uma iteração anterior do estudo, com ajustes de linha diferentes da Tab. 4.13 (por exemplo RS4 com 513 A e RL3 com 462 A). O simulador usa a Tab. 4.13 e a planilha, que concordam entre si.' },
       { kind: 'premissa', text: 'Impedâncias equivalentes das SEs ESB e AGF retiradas do relatório ANAFAS (Anexo A) para os cálculos com recomposição.' },
       { kind: 'premissa', text: 'Proteção geral de barramento (01Z1/01Z2) modelada como um único equivalente que enxerga toda a corrente de falta da SE AQZ, como nos cálculos do TCC.' },
       { kind: 'divergencia', text: 'Fig. 4.2 indica T9 = 3.664 m, mas a Tab. 4.5 soma 4.114 m (3.173 + 941), valor coerente com a impedância da Tab. 4.6. O simulador usa a Tab. 4.5.' },
       { kind: 'divergencia', text: 'Fig. 4.6(c) indica Icc2F = 972,7 A na barra RL2 (21I5); a Tab. 4.7 e a relação √3/2·Icc3F dão 907,7 A.' },
-      { kind: 'divergencia', text: 'Ciclo "1I+2T" (Tab. 4.11/4.13) versus lógica do ensaio: torque control "AND (SH0 OR SH1)" (Fig. 5.6) e o relato de três religamentos com as duas últimas aberturas temporizadas (seção 5.6.1) indicam 2 operações instantâneas e 2 temporizadas. O preset do ensaio reproduz a versão do laboratório.' },
+      { kind: 'divergencia', text: 'Ciclo "1I+2T" (Tab. 4.13 e OAP 165/2013 de campo, com tempo morto 10-10 s e rearme de 45 s) versus o laboratório: o arquivo de ajustes do SEL-751 usado nos ensaios tem E79 = 3 e 50P1TC com "AND (SH0 OR SH1)", isto é, 2 operações instantâneas e 2 temporizadas. O preset do ensaio 5.6.1 reproduz a versão do laboratório.' },
+      { kind: 'divergencia', text: 'RL2 do laboratório (RL3 no campo) foi ensaiado com 50P1D = 0,02 s e E79 = 1 (tempo morto 12 s), contra 0,03 s e "1I" (sem religamento) na Tab. 4.13. Os presets dos ensaios 5.7.3 usam o valor do laboratório.' },
+      { kind: 'divergencia', text: 'Planilha de cálculos: os pickups de neutro dos religadores de linha (65,1 A, 71,1 A, 54 A) seguem um critério anterior; a Tab. 4.13 e os relés ensaiados usam 20 a 24 A. Os dials de neutro da planilha coincidem com a Tab. 4.13.' },
       { kind: 'divergencia', text: 'Os ajustes de RL3 (Tab. 4.13) e a maioria das tabelas referem-se à topologia de alcance máximo (Fig. 4.6), em que os religadores de linha são alimentados pela SE AQZ.' },
     ],
   };

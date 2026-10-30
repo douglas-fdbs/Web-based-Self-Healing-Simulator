@@ -45,9 +45,28 @@ p();
 p(`Maior erro relativo: **${nf(worst47, 3)}%** (arredondamento das impedâncias publicadas).`);
 p();
 
+// ---------------------------------------------------------------- Planilha do TCC
+p('## 2. Curto-circuito: planilha de cálculos do TCC (fontes AQZ, ESB e AGF)');
+p();
+p('Aba "Z(pu) Acumulado e curtocircuito" da planilha do autor (pasta ARTIGO_REI). Inclui os caminhos alimentados pelas SEs ESB e AGF, que a Tab. 4.7 não traz. Correntes em A.');
+p();
+p('| Fonte | Alimentador | Barra | Icc3F sim. | Icc3F ref. | IccFT sim. | IccFT ref. | Maior erro (4 tipos) |');
+p('|---|---|---|---:|---:|---:|---:|---:|');
+let worstPl = 0;
+SH.scenarios.tcc2015.validation.planilha.forEach(([src, feeder, bus, segs, ...ref]) => {
+  const r = SC.pathFault(tcc, src, segs);
+  const sim = [r.i3f, r.i2f, r.ift, r.iftm];
+  const e = Math.max(...sim.map((x, i) => Math.abs((x - ref[i]) / ref[i]) * 100));
+  worstPl = Math.max(worstPl, e);
+  if (src !== 'AQZ') p(`| ${src} | ${feeder} | ${bus} | ${nf(sim[0])} | ${nf(ref[0])} | ${nf(sim[2])} | ${nf(ref[2])} | ${nf(e, 4)}% |`);
+});
+p();
+p(`Tabela acima: só as 18 barras alimentadas por ESB e AGF. Nas ${SH.scenarios.tcc2015.validation.planilha.length} barras da planilha (incluindo as 24 alimentadas pela SE AQZ), o maior erro relativo é **${nf(worstPl, 4)}%**.`);
+p();
+
 // ---------------------------------------------------------------- Tab 3.6 Nobre
 const nob = N.buildModel(SH.scenarios.nobre2013);
-p('## 2. Curto-circuito: Tabela 3.6 de Nobre (2013), primeira topologia');
+p('## 3. Curto-circuito: Tabela 3.6 de Nobre (2013), primeira topologia');
 p();
 p('| Trecho | Fonte | Icc3F sim. | Icc3F ref. | Icc2F sim. | Icc2F ref. | IccFT sim. | IccFT ref. | IccFTm sim. | IccFTm ref. | Maior erro |');
 p('|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
@@ -67,7 +86,7 @@ p();
 // manobras do SRA como "Verbo DISPOSITIVO" (dispositivo lido do evento, não do texto)
 const sraActs = (res, model = tcc) => res.log.filter((e) => e.cat === 'sra' && e.dev && /^(Abrir|Fechar|Religar)/.test(e.text))
   .map((e) => `${e.text.split(' ')[0]} ${model.switches[e.dev].label || e.dev}`);
-p('## 3. Recomposição automática: Tabela 4.2 de Nobre (2013)');
+p('## 4. Recomposição automática: Tabela 4.2 de Nobre (2013)');
 p();
 p('Falta trifásica permanente no meio de cada trecho, configuração normal, esquema convencional, self-healing ligado.');
 p();
@@ -91,7 +110,7 @@ p();
 p('¹ Com os ajustes de Nobre (instantâneos sem atraso intencional), uma falta no meio de T8 (3,3 kA) supera o pickup instantâneo de 21I5 (2,5 kA) e de RS3 (1,72 kA): os dois abrem. O SRA isola a falta e religa 21I5, manobra que não aparece na Tab. 4.2 porque aquela tabela supõe atuação seletiva.');
 p();
 
-p('## 4. Recomposição na rede atual (TCC, Fig. 4.2)');
+p('## 5. Recomposição na rede atual (TCC, Fig. 4.2)');
 p();
 p('| Caso | Manobras do SRA | Carga sem suprimento ao final | Observação |');
 p('|---|---|---:|---|');
@@ -113,22 +132,34 @@ tccCases.forEach(([name, input, obs]) => {
 p();
 
 // ---------------------------------------------------------------- Ensaios
-p('## 5. Ensaios do Capítulo 5 do TCC');
+p('## 6. Ensaios do Capítulo 5 do TCC contra os relatórios da mala de testes');
 p();
-p('Ajustes da Tab. 4.13 (alimentador 21I5), disjuntor com 50 ms de interrupção e GOOSE com 3 ms. Os valores do TCC são os medidos com a mala de testes CE-6006, que incluem o processamento interno dos relés e o tempo de abertura simulado pela mala; por isso os totais simulados ficam algumas dezenas de milissegundos abaixo.');
+p('Os valores "Medido" vêm dos relatórios do Sequenc (mala Conprove CE-6006, out/2015) da pasta ARTIGO_REI: instantes das transições GOOSE (GI) menos os 100 ms de pré-falta, ou intervalo entre duas transições. As correntes injetadas confirmam os pontos de falta usados (9.419 A, 10.176 A, 4.715 A, 3.309 A e 2.145 A primários).');
 p();
-p('| Ensaio | Medida | TCC | Simulador |');
-p('|---|---|---|---:|');
+p(`Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos ensaios quando diferem da Tab. 4.13 (ciclo 2I+2T de AQZ, atraso de 0,02 s no 50 de RL2), disjuntor de 50 ms (atraso programado na mala), GOOSE de 3 ms e tempo de processamento do relé de ${nf(SH.labs.LAB_DELAY * 1000, 0)} ms nos elementos 50/50N e no 50BF. Esse valor é a mediana do atraso entre o tempo ajustado e o GOOSE de trip nos ensaios trifásicos (10 a 16 ms; no 50BF, 8 a 13 ms).`);
+p();
+p('| Ensaio | Medida | TCC (texto) | Medido | Simulado | Diferença |');
+p('|---|---|---|---:|---:|---:|');
 SH.labs.tests.forEach((t) => {
   const res = SH.simulator.run(tcc, SH.labs.buildInput(tcc, t));
   t.measures.forEach((m, i) => {
     const v = SH.labs.measure(res, m);
     const txt = typeof v === 'number' ? (m.unit === 'ms' ? `${nf(v, 1)} ms` : nf(v, 0)) : String(v);
-    p(`| ${i === 0 ? `${t.ref.split(',')[0]}: ${t.title}` : ''} | ${m.label} | ${m.tcc} | ${txt} |`);
+    const meas = typeof m.lab === 'number' ? `${nf(m.lab, 1)} ms` : (m.labText || '-');
+    const diff = typeof m.lab === 'number' && typeof v === 'number' ? `${v - m.lab >= 0 ? '+' : ''}${nf(v - m.lab, 1)} ms` : '';
+    p(`| ${i === 0 ? `${t.ref.split(';')[0].split(',')[0]}: ${t.title}` : ''} | ${m.label} | ${m.tcc} | ${meas} | ${txt} | ${diff} |`);
   });
 });
 p();
-p('Leitura qualitativa: os três comportamentos relatados no TCC aparecem na simulação. (i) Com seletividade lógica e 50BF, a retaguarda atua cerca de 200 ms após o trip do relé a jusante; (ii) sem 50BF, a retaguarda espera a própria curva (NI ou MI); (iii) sem seletividade lógica, os dois instantâneos atuam juntos. No par RL1/RL2 a curva 51 de RS4 vence o 50BF por menos de 1 ms (232,2 ms contra 233 ms), o problema relatado na seção 5.7.3, e a solução com bloqueio do 51 e retaguarda de +200 ms o corrige.');
+p(SH.labs.CLEAR_NOTE);
+p();
+p('Leitura:');
+p();
+p('- Tempos de trip e intervalos entre GOOSEs ficam a até 12 ms dos medidos. A exceção é o trip de RS4 no ensaio monofásico com 50BF (medido 9 ms acima do simulado), em que a corrente fica só 24% acima do pickup do 50P e a detecção é mais lenta.');
+p('- Sem o tempo de processamento, os intervalos trip → trip remoto ficariam 13 a 14 ms abaixo dos medidos (203 ms contra 216 a 218 ms).');
+p('- No ensaio 5.7.3(a), com o atraso real de RL2 (0,02 s), o modelo ideal faria o 50BF chegar a RS4 antes da curva 51 (trip remoto em 223 ms contra 232 ms), ao contrário do medido. Com o processamento calibrado o 50BF sai em 246 ms e a 51 vence, como no laboratório (238 ms contra 246 ms).');
+p('- Nos ensaios monofásicos a mala injetou só as fases. Os tempos medidos só são reproduzidos com os elementos de neutro fora de serviço: com o 51N de 21I5 (25 A, dial 0,43, MI) ativo, o ensaio AQZ-RL1 sem 50BF terminaria em cerca de 200 ms, e não em 654 ms. Esses relatórios validam os elementos de fase com corrente monofásica, não a proteção de neutro.');
+p('- O texto do TCC cita 204 ms para o ensaio 5.7.3(b); o relatório desse ensaio registra 214 ms, e 204,8 ms é o valor do ensaio 5.7.3(a).');
 p();
 fs.writeFileSync(path.join(__dirname, '..', 'docs', 'VALIDACAO.md'), `${out.join('\n')}\n`);
 console.log(`docs/VALIDACAO.md gerado (${out.length} linhas).`);

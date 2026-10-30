@@ -144,7 +144,7 @@
       const active = pickNow[el] && en50 && !blocked && s.inst > 0;
       if (!active) { rt.t50[el] = null; return; }
       if (rt.t50[el] == null) rt.t50[el] = t;
-      cand.push({ t: rt.t50[el] + (s.instDelay || 0), el });
+      cand.push({ t: rt.t50[el] + (s.instDelay || 0) + (opts.relayDelay || 0), el });
     });
     // Elementos de tempo inverso (51P / 51N)
     [['P51', P, Iph], ['N51', N, Ir]].forEach(([el, s, I]) => {

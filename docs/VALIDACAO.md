@@ -30,7 +30,34 @@ Barras da configuração de alcance máximo de cada alimentador (Fig. 4.6), alim
 
 Maior erro relativo: **0,061%** (arredondamento das impedâncias publicadas).
 
-## 2. Curto-circuito: Tabela 3.6 de Nobre (2013), primeira topologia
+## 2. Curto-circuito: planilha de cálculos do TCC (fontes AQZ, ESB e AGF)
+
+Aba "Z(pu) Acumulado e curtocircuito" da planilha do autor (pasta ARTIGO_REI). Inclui os caminhos alimentados pelas SEs ESB e AGF, que a Tab. 4.7 não traz. Correntes em A.
+
+| Fonte | Alimentador | Barra | Icc3F sim. | Icc3F ref. | IccFT sim. | IccFT ref. | Maior erro (4 tipos) |
+|---|---|---|---:|---:|---:|---:|---:|
+| ESB | 21S7 | ESB | 8.170,9 | 8.170,9 | 9.069,5 | 9.069,5 | 0,0000% |
+| ESB | 21S7 | RS3 | 5.833,1 | 5.832,8 | 4.168,6 | 4.168,5 | 0,0046% |
+| ESB | 21S7 | RL1 | 3.692,6 | 3.692,7 | 2.330,8 | 2.330,8 | 0,0018% |
+| ESB | 21S7 | RS1 | 2.967,4 | 2.967,5 | 1.809,2 | 1.809,2 | 0,0027% |
+| ESB | 21S7 | AQZ | 1.612,3 | 1.612,4 | 928,9 | 928,9 | 0,0039% |
+| ESB | 21S1 | T11 | 5.450,7 | 5.450,9 | 2.925,5 | 2.925,5 | 0,0046% |
+| ESB | 21S1 | RL3 | 1.877,5 | 1.877,6 | 1.082,2 | 1.082,2 | 0,0033% |
+| ESB | 21S1 | RS4 | 1.258,9 | 1.259,0 | 728,5 | 728,6 | 0,0026% |
+| ESB | 21S1 | 21I5 | 1.102,3 | 1.102,3 | 633,5 | 633,5 | 0,0016% |
+| ESB | 21S1 | RL2 | 3.260,6 | 3.260,8 | 1.741,1 | 1.741,1 | 0,0035% |
+| ESB | 21S1 | RS2 | 2.496,6 | 2.496,8 | 1.335,6 | 1.335,6 | 0,0052% |
+| ESB | 21S1 | 21I6 | 1.446,9 | 1.446,9 | 778,2 | 778,2 | 0,0022% |
+| AGF | 21I2 | AGF | 6.010,5 | 6.010,5 | 6.191,7 | 6.191,7 | 0,0003% |
+| AGF | 21I2 | RS7 | 1.727,9 | 1.727,9 | 848,9 | 848,9 | 0,0007% |
+| AGF | 21I2 | RL4 | 1.145,6 | 1.145,6 | 583,6 | 583,6 | 0,0019% |
+| AGF | 21I2 | RS6 | 1.145,4 | 1.145,4 | 583,5 | 583,5 | 0,0036% |
+| AGF | 21I2 | RS5 | 1.017,1 | 1.017,1 | 522,4 | 522,4 | 0,0036% |
+| AGF | 21I2 | AQZ | 665,6 | 665,6 | 348,9 | 348,9 | 0,0022% |
+
+Tabela acima: só as 18 barras alimentadas por ESB e AGF. Nas 42 barras da planilha (incluindo as 24 alimentadas pela SE AQZ), o maior erro relativo é **0,0098%**.
+
+## 3. Curto-circuito: Tabela 3.6 de Nobre (2013), primeira topologia
 
 | Trecho | Fonte | Icc3F sim. | Icc3F ref. | Icc2F sim. | Icc2F ref. | IccFT sim. | IccFT ref. | IccFTm sim. | IccFTm ref. | Maior erro |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -49,7 +76,7 @@ Maior erro relativo: **0,061%** (arredondamento das impedâncias publicadas).
 
 Maior erro relativo: **0,0024%**.
 
-## 3. Recomposição automática: Tabela 4.2 de Nobre (2013)
+## 4. Recomposição automática: Tabela 4.2 de Nobre (2013)
 
 Falta trifásica permanente no meio de cada trecho, configuração normal, esquema convencional, self-healing ligado.
 
@@ -70,7 +97,7 @@ Falta trifásica permanente no meio de cada trecho, configuração normal, esque
 
 ¹ Com os ajustes de Nobre (instantâneos sem atraso intencional), uma falta no meio de T8 (3,3 kA) supera o pickup instantâneo de 21I5 (2,5 kA) e de RS3 (1,72 kA): os dois abrem. O SRA isola a falta e religa 21I5, manobra que não aparece na Tab. 4.2 porque aquela tabela supõe atuação seletiva.
 
-## 4. Recomposição na rede atual (TCC, Fig. 4.2)
+## 5. Recomposição na rede atual (TCC, Fig. 4.2)
 
 | Caso | Manobras do SRA | Carga sem suprimento ao final | Observação |
 |---|---|---:|---|
@@ -82,38 +109,63 @@ Falta trifásica permanente no meio de cada trecho, configuração normal, esque
 | Perda da SE ESB | Abrir 21S7; Abrir 21S1; Fechar RL1; Fechar RL2 | 0 A |  |
 | Falta no barramento 13,8 kV da SE AQZ | Abrir 21I7; Abrir 21I6; Abrir 21I5; Abrir 21I4; Fechar RL3; Fechar RL2; Fechar RL1; Abrir RS6; Fechar RL4 | 168 A | coerente com Vieira (2015): parte de 21I4 não cabe na SE AGF |
 
-## 5. Ensaios do Capítulo 5 do TCC
+## 6. Ensaios do Capítulo 5 do TCC contra os relatórios da mala de testes
 
-Ajustes da Tab. 4.13 (alimentador 21I5), disjuntor com 50 ms de interrupção e GOOSE com 3 ms. Os valores do TCC são os medidos com a mala de testes CE-6006, que incluem o processamento interno dos relés e o tempo de abertura simulado pela mala; por isso os totais simulados ficam algumas dezenas de milissegundos abaixo.
+Os valores "Medido" vêm dos relatórios do Sequenc (mala Conprove CE-6006, out/2015) da pasta ARTIGO_REI: instantes das transições GOOSE (GI) menos os 100 ms de pré-falta, ou intervalo entre duas transições. As correntes injetadas confirmam os pontos de falta usados (9.419 A, 10.176 A, 4.715 A, 3.309 A e 2.145 A primários).
 
-| Ensaio | Medida | TCC | Simulador |
-|---|---|---|---:|
-| Seção 5.6.1: Religamento de um IED (AQZ = 21I5) | Número de aberturas do 21I5 | 4 (três religamentos) | 4 |
-|  | 1ª abertura (50P, atraso 100 ms) | ≈ 100 ms | 100,0 ms |
-|  | Últimas aberturas, tempo após o religamento (51P) | 200 ms | 200,0 ms |
-| Seção 5.6.2: Religamento de dois IEDs (AQZ + RL1) | Aberturas de 21I5 | 1 (só na primeira falta) | 1 |
-|  | Aberturas de RS4 (RL1) | ciclo completo até bloquear | 3 |
-|  | Estado final de 21I5 | fechado, suprindo T8 | fechado |
-| Seção 5.7.1(a): Seletividade lógica + 50BF | Trip 50P de 21I5 → trip de AQZ_MT | 217 ms | 203,0 ms |
-|  | Eliminação da falta | ≈ 400 ms | 353,0 ms |
-| Seção 5.7.1(b): Só seletividade lógica (sem 50BF) | Trip 50P de 21I5 → trip 51P de AQZ_MT | 476 ms | 493,8 ms |
-|  | Eliminação da falta | ≈ 650 ms | 643,8 ms |
-| Seção 5.7.1(c): Sem seletividade lógica e sem 50BF | Trip de AQZ_MT | pouco mais de 100 ms | 100,0 ms |
-|  | Trip de 21I5 | pouco mais de 100 ms | 100,0 ms |
-|  | Eliminação da falta | pouco menos de 200 ms | 150,0 ms |
-| Seção 5.7.2: Seletividade lógica + 50BF | Trip 50P de RS4 → trip de 21I5 | 217 ms | 203,0 ms |
-|  | Eliminação da falta | ≈ 360 ms | 303,0 ms |
-| Seção 5.7.2: Só seletividade lógica (sem 50BF) | Trip 50P de RS4 → trip 51P de 21I5 | 372 ms | 376,9 ms |
-|  | Trip 51P de 21I5 após a falta | ≈ 430 ms | 426,9 ms |
-|  | Eliminação da falta | ≈ 500 ms | 476,9 ms |
-| Seção 5.7.2: Sem seletividade lógica e sem 50BF | Trip de RS4 | atua | 50,0 ms |
-|  | Trip de 21I5 | também atua | 100,0 ms |
-| Seção 5.7.3: SL bloqueando só o 50 + 50BF | Elemento que abriu RS4 | 51 (antes do 50BF) | 51P (fase, tempo inverso) |
-|  | Trip 50P de RL3 → trip de RS4 | < 50BF | 202,2 ms |
-| Seção 5.7.3: SL bloqueando 50 e 51 + retaguarda (+200 ms) + 50BF | Trip 50P de RL3 → trip de RS4 | 204 ms | 203,0 ms |
-|  | Eliminação da falta | ≈ 300 ms | 283,0 ms |
-| Seção 5.7.3: Mesmo esquema com perda do GOOSE de 50BF | Elemento que abriu RS4 | 51 de retaguarda (Phase TOC) | 51 de retaguarda (+ somador) |
-|  | Eliminação da falta | atraso maior que no caso anterior | 482,2 ms |
+Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos ensaios quando diferem da Tab. 4.13 (ciclo 2I+2T de AQZ, atraso de 0,02 s no 50 de RL2), disjuntor de 50 ms (atraso programado na mala), GOOSE de 3 ms e tempo de processamento do relé de 13 ms nos elementos 50/50N e no 50BF. Esse valor é a mediana do atraso entre o tempo ajustado e o GOOSE de trip nos ensaios trifásicos (10 a 16 ms; no 50BF, 8 a 13 ms).
 
-Leitura qualitativa: os três comportamentos relatados no TCC aparecem na simulação. (i) Com seletividade lógica e 50BF, a retaguarda atua cerca de 200 ms após o trip do relé a jusante; (ii) sem 50BF, a retaguarda espera a própria curva (NI ou MI); (iii) sem seletividade lógica, os dois instantâneos atuam juntos. No par RL1/RL2 a curva 51 de RS4 vence o 50BF por menos de 1 ms (232,2 ms contra 233 ms), o problema relatado na seção 5.7.3, e a solução com bloqueio do 51 e retaguarda de +200 ms o corrige.
+| Ensaio | Medida | TCC (texto) | Medido | Simulado | Diferença |
+|---|---|---|---:|---:|---:|
+| Seção 5.6.1: Religamento de um IED (AQZ = 21I5) | Número de aberturas do 21I5 | 4 (três religamentos) | - | 4 |  |
+|  | 1ª abertura (50P, atraso 100 ms) | ≈ 100 ms | - | 113,0 ms |  |
+|  | Últimas aberturas, tempo após o religamento (51P) | 200 ms | - | 200,0 ms |  |
+| Seção 5.6.2: Religamento de dois IEDs (AQZ + RL1) | Aberturas de 21I5 | 1 (só na primeira falta) | - | 1 |  |
+|  | Aberturas de RS4 (RL1) | ciclo completo até bloquear | - | 3 |  |
+|  | Estado final de 21I5 | fechado, suprindo T8 | - | fechado |  |
+| Seção 5.7.1(a): Seletividade lógica + 50BF (trifásico) | Trip 50P de 21I5 após a falta | - | 115,2 ms | 113,0 ms | -2,2 ms |
+|  | Trip de 21I5 → trip de AQZ_MT | 217 ms | 216,5 ms | 216,0 ms | -0,5 ms |
+|  | Eliminação da falta¹ | ≈ 400 ms | 400,0 ms | 379,0 ms | -21,0 ms |
+| Seção 5.7.1(b): Só seletividade lógica, sem 50BF (trifásico) | Trip de 21I5 → trip 51P de AQZ_MT | 476 ms | 477,1 ms | 480,8 ms | +3,7 ms |
+|  | Eliminação da falta¹ | ≈ 650 ms | 650,0 ms | 643,8 ms | -6,2 ms |
+| Seção 5.7.1(c): Sem seletividade lógica e sem 50BF (trifásico) | Trip de AQZ_MT | pouco mais de 100 ms | 117,7 ms | 113,0 ms | -4,7 ms |
+|  | Trip de 21I5 | pouco mais de 100 ms | 110,1 ms | 113,0 ms | +2,9 ms |
+|  | Eliminação da falta¹ | pouco menos de 200 ms | 183,3 ms | 163,0 ms | -20,3 ms |
+| Relatório AQZ_MT-AQZ nº 4: Seletividade lógica + 50BF (fase-terra) | Trip 50P de 21I5 após a falta | - | 114,4 ms | 113,0 ms | -1,4 ms |
+|  | Trip de 21I5 → trip de AQZ_MT | - | 214,2 ms | 216,0 ms | +1,8 ms |
+|  | Eliminação da falta¹ | - | 400,0 ms | 379,0 ms | -21,0 ms |
+| Relatório AQZ_MT-AQZ nº 5: Só seletividade lógica, sem 50BF (fase-terra) | Trip de AQZ_MT após a falta | - | 574,6 ms | 574,1 ms | -0,5 ms |
+|  | Trip de 21I5 → trip de AQZ_MT | - | 463,1 ms | 461,1 ms | -2,0 ms |
+| Relatório AQZ_MT-AQZ nº 6: Sem seletividade lógica e sem 50BF (fase-terra) | Trip de AQZ_MT | - | 119,3 ms | 113,0 ms | -6,3 ms |
+|  | Trip de 21I5 | - | 112,5 ms | 113,0 ms | +0,5 ms |
+| Seção 5.7.2: Seletividade lógica + 50BF (trifásico) | Trip 50P de RS4 após a falta | - | 62,7 ms | 63,0 ms | +0,3 ms |
+|  | Trip de RS4 → trip de 21I5 | 217 ms | 217,7 ms | 216,0 ms | -1,7 ms |
+|  | Eliminação da falta¹ | ≈ 360 ms | 350,0 ms | 329,0 ms | -21,0 ms |
+| Seção 5.7.2: Só seletividade lógica, sem 50BF (trifásico) | Trip de RS4 → trip 51P de 21I5 | 372 ms | 369,9 ms | 363,9 ms | -6,0 ms |
+|  | Trip 51P de 21I5 após a falta | ≈ 430 ms | 430,9 ms | 426,9 ms | -4,0 ms |
+|  | Eliminação da falta¹ | ≈ 500 ms | 500,0 ms | 476,9 ms | -23,1 ms |
+| Seção 5.7.2: Sem seletividade lógica e sem 50BF (trifásico) | Trip de RS4 | atua | 61,8 ms | 63,0 ms | +1,2 ms |
+|  | Trip de 21I5 | também atua | 116,1 ms | 113,0 ms | -3,1 ms |
+| Relatório AQZ-RL1 monofásico com 50BF: Seletividade lógica + 50BF (fase-terra) | Trip 50P de RS4 após a falta | - | 72,4 ms | 63,0 ms | -9,4 ms |
+|  | Trip de RS4 → trip de 21I5 | - | 218,4 ms | 216,0 ms | -2,4 ms |
+| Relatório AQZ-RL1 monofásico sem 50BF: Só seletividade lógica, sem 50BF (fase-terra) | Trip 51P de 21I5 após a falta | - | 654,0 ms | 646,1 ms | -7,9 ms |
+|  | Trip de RS4 → trip de 21I5 | - | 582,1 ms | 583,1 ms | +1,0 ms |
+| Seção 5.7.3: SL bloqueando só o 50 + 50BF | Elemento que abriu RS4 | 51 (antes do 50BF) | 51 (GOOSE 7,8 ms antes do 50BF) | 51P (fase, tempo inverso) |  |
+|  | Trip de RS4 após a falta | - | 238,3 ms | 232,2 ms | -6,1 ms |
+|  | Trip 50P de RL3 → trip de RS4 | < 50BF | 204,8 ms | 199,2 ms | -5,6 ms |
+| Seção 5.7.3: SL bloqueando 50 e 51 + retaguarda (+200 ms) + 50BF | Trip 50P de RL3 → trip de RS4 | 204 ms | 213,7 ms | 216,0 ms | +2,3 ms |
+|  | Eliminação da falta¹ | ≈ 300 ms | 317,0 ms | 299,0 ms | -18,0 ms |
+| Seção 5.7.3: Mesmo esquema sem o trip por 50BF | Elemento que abriu RS4 | 51 de retaguarda (Phase TOC) | 51 de retaguarda | 51 de retaguarda (+ somador) |  |
+|  | Trip de RS4 após a falta | - | 443,4 ms | 432,2 ms | -11,2 ms |
+|  | Eliminação da falta¹ | atraso maior que no caso anterior | 500,0 ms | 482,2 ms | -17,8 ms |
+
+¹ No relatório, a eliminação é o início do estado pós-falta da mala, que avança 50 ms (atraso programado) depois de receber o GOOSE de trip; a recepção acrescenta de 7 a 21 ms. No simulador, é o trip mais os 50 ms de abertura do disjuntor.
+
+Leitura:
+
+- Tempos de trip e intervalos entre GOOSEs ficam a até 12 ms dos medidos. A exceção é o trip de RS4 no ensaio monofásico com 50BF (medido 9 ms acima do simulado), em que a corrente fica só 24% acima do pickup do 50P e a detecção é mais lenta.
+- Sem o tempo de processamento, os intervalos trip → trip remoto ficariam 13 a 14 ms abaixo dos medidos (203 ms contra 216 a 218 ms).
+- No ensaio 5.7.3(a), com o atraso real de RL2 (0,02 s), o modelo ideal faria o 50BF chegar a RS4 antes da curva 51 (trip remoto em 223 ms contra 232 ms), ao contrário do medido. Com o processamento calibrado o 50BF sai em 246 ms e a 51 vence, como no laboratório (238 ms contra 246 ms).
+- Nos ensaios monofásicos a mala injetou só as fases. Os tempos medidos só são reproduzidos com os elementos de neutro fora de serviço: com o 51N de 21I5 (25 A, dial 0,43, MI) ativo, o ensaio AQZ-RL1 sem 50BF terminaria em cerca de 200 ms, e não em 654 ms. Esses relatórios validam os elementos de fase com corrente monofásica, não a proteção de neutro.
+- O texto do TCC cita 204 ms para o ensaio 5.7.3(b); o relatório desse ensaio registra 214 ms, e 204,8 ms é o valor do ensaio 5.7.3(a).
 

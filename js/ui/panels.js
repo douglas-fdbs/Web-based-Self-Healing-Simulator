@@ -386,6 +386,7 @@
       el('span', { class: 'eyebrow', text: 'Parâmetros da simulação' }),
       el('div', { class: 'grid2' },
         num('optBrk', 'Abertura do disjuntor (ms)', o.breakerTime * 1000, 1, (v) => { o.breakerTime = v / 1000; app.saveOptions(); }),
+        num('optProc', 'Processamento do relé, 50 e 50BF (ms)', (o.relayDelay || 0) * 1000, 1, (v) => { o.relayDelay = Math.max(0, v) / 1000; app.saveOptions(); }),
         num('optMmax', 'Múltiplo máximo da curva', o.Mmax, 1, (v) => { o.Mmax = v; app.saveOptions(); app.renderPanel(); }),
         num('optSraD', 'Decisão do SRA (s)', o.sraDelay, 0.5, (v) => { o.sraDelay = v; app.saveOptions(); }),
         num('optSraS', 'Intervalo entre manobras (s)', o.sraStep, 0.5, (v) => { o.sraStep = v; app.saveOptions(); }),
@@ -519,16 +520,17 @@
         t.note ? el('p', { class: 'small muted', text: t.note }) : null);
       if (ran) {
         card.append(el('div', { class: 'table-wrap' }, el('table', {},
-          el('thead', {}, el('tr', {}, el('th', { class: 'l', text: 'Medida' }), el('th', { class: 'l', text: 'TCC' }), el('th', { text: 'Simulado' }))),
+          el('thead', {}, el('tr', {}, el('th', { class: 'l', text: 'Medida' }), el('th', { class: 'l', text: 'TCC' }), el('th', { text: 'Medido' }), el('th', { text: 'Simulado' }))),
           el('tbody', {}, t.measures.map((m, i) => {
             const v = ran.values[i];
             const txt = typeof v === 'number' ? (m.unit === 'ms' ? fmt.ms(v, 1) : fmt.num(v, 0)) : (v == null ? '-' : String(v));
-            return el('tr', {}, el('td', { class: 'l', style: { whiteSpace: 'normal' }, text: m.label }), el('td', { class: 'l', text: m.tcc }), el('td', { text: txt }));
+            const meas = typeof m.lab === 'number' ? fmt.ms(m.lab, 1) : (m.labText || '-');
+            return el('tr', {}, el('td', { class: 'l', style: { whiteSpace: 'normal' }, text: m.label }), el('td', { class: 'l', text: m.tcc }), el('td', { style: typeof m.lab === 'number' ? null : { whiteSpace: 'normal' }, text: meas }), el('td', { text: txt }));
           })))));
       }
       root.append(card);
     });
-    root.append(el('p', { class: 'small muted', text: 'Os tempos simulados não incluem o processamento interno dos relés nem o tempo de abertura simulado pela mala de testes; por isso os totais ficam algumas dezenas de milissegundos abaixo dos medidos.' }));
+    root.append(el('p', { class: 'small muted', text: `"Medido" vem dos relatórios da mala CE-6006 (instantes dos GOOSEs). Os ensaios usam os ajustes do relé ensaiado quando diferem da Tab. 4.13 e um tempo de processamento de ${fmt.num(SH.labs.LAB_DELAY * 1000, 0)} ms nos elementos 50 e no 50BF, calibrado nesses relatórios. ${SH.labs.CLEAR_NOTE}` }));
   }
 
   // ------------------------------------------------------------------ Fontes

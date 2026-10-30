@@ -43,7 +43,7 @@
     const o = app.options;
     SH.ui.storeSet(OPT_KEY, {
       sl: o.sl, bf: o.bf, busInst50: o.busInst50, slBlocks51: o.slBlocks51, commFail: o.commFail, sra: o.sra,
-      breakerTime: o.breakerTime, gooseLatency: o.gooseLatency, bfd: o.bfd, backupAdder: o.backupAdder, Mmax: o.Mmax,
+      breakerTime: o.breakerTime, gooseLatency: o.gooseLatency, bfd: o.bfd, backupAdder: o.backupAdder, Mmax: o.Mmax, relayDelay: o.relayDelay,
       sraDelay: o.sraDelay, sraStep: o.sraStep, pf: o.pf, vmin: o.vmin, checkVoltage: o.checkVoltage,
     });
   };

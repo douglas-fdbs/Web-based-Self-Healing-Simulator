@@ -48,9 +48,9 @@ Rede radial, cargas como correntes constantes iguais à carga pesada de cada tre
 
 ### 4.2 Religamento (79)
 
-A notação do TCC é lida como sequência de operações até o bloqueio: `1I+2T` significa três operações, a primeira com o 50/50N habilitado e as duas seguintes temporizadas; `3I` são três operações instantâneas. O número de religamentos é o número de operações menos um. O tempo morto é o da Tab. 4.11/4.12 (10 s nos religadores da SE, mais 1 s a cada nível a jusante). Depois de um religamento bem-sucedido, o contador rearma após 30 s. Trip remoto por 50BF leva direto ao bloqueio.
+A notação do TCC é lida como sequência de operações até o bloqueio: `1I+2T` significa três operações, a primeira com o 50/50N habilitado e as duas seguintes temporizadas; `3I` são três operações instantâneas. O número de religamentos é o número de operações menos um. O tempo morto é o da Tab. 4.11/4.12 (10 s nos religadores da SE, mais 1 s a cada nível a jusante). Depois de um religamento bem-sucedido, o contador rearma após 45 s (79RSD da OAP 165/2013 da SE AQZ e do relé AQZ ensaiado). Trip remoto por 50BF leva direto ao bloqueio.
 
-**Divergência na fonte.** A configuração usada no ensaio da seção 5.6.1 (torque control "AND (SH0 OR SH1)" e relato de três religamentos com as duas últimas aberturas temporizadas) indica duas operações instantâneas e duas temporizadas, diferente do `1I+2T` da Tab. 4.13. O simulador usa a Tab. 4.13 por padrão e o preset do ensaio usa a configuração do laboratório.
+**Divergência na fonte.** O arquivo de ajustes do SEL-751 usado nos ensaios (E79 = 3 e torque control "AND (SH0 OR SH1)" no 50P1) indica duas operações instantâneas e duas temporizadas, diferente do `1I+2T` da Tab. 4.13. A OAP 165/2013 de campo confirma `1I-2T` para 21I5 (tempo morto 10-10 s). O simulador usa a Tab. 4.13 por padrão e o preset do ensaio usa a configuração do laboratório.
 
 ### 4.3 Grupos de ajuste (SIAP)
 
@@ -65,7 +65,14 @@ Os disjuntores secundários 01Z1 e 01Z2 são modelados como um equivalente únic
 - **Seletividade lógica.** Quando um relé registra partida de qualquer elemento (50P1P, 51P1P, 50N1P, 51N1P), envia GOOSE ao primeiro relé a montante na topologia vigente, que fica com os elementos de tempo definido inibidos enquanto a mensagem estiver ativa (torque control "NOT (VB004 OR VB005)", seção 5.3.2). A opção de estender o bloqueio ao 51 cria uma 51 de retaguarda, idêntica à principal com somador de 0,20 s (51ACT, Fig. 5.6c).
 - **Falha de disjuntor (50BF).** No trip, um temporizador BFD de 0,20 s é iniciado (Fig. 5.5). Se, ao final, o disjuntor continua fechado e a corrente supera 50BFP = 0,02 A secundários (multiplicado pela RTC), o relé envia GOOSE de trip ao relé a montante, que abre sem religar.
 - **Mensagens.** Latência fixa de 3 ms (classe TT6 da IEC 61850-5 para mensagens de trip). É possível simular perda de todas as mensagens, só das de bloqueio ou só das de 50BF.
+- **Processamento do relé.** Parâmetro `relayDelay`, somado ao atraso dos elementos 50/50N e à saída do 50BF. Vale 0 na simulação livre, como nos cálculos do TCC, e 13 ms nos ensaios. O valor foi calibrado nos relatórios da mala CE-6006: o GOOSE de trip sai de 10 a 16 ms depois do atraso ajustado (mediana 13 ms) e o GOOSE de 50BF, de 8 a 13 ms depois do BFD. As curvas 51 não recebem esse atraso, porque os tempos medidos já ficam a até 11 ms da curva teórica, com sinais variados. O trip recebido por GOOSE soma só a latência da mensagem (medido: 4 a 6 ms entre o GOOSE de 50BF e o GOOSE de trip do relé a montante).
 - **Assinantes.** Num IED real, as assinaturas GOOSE são configuradas de forma estática no arquivo SCD. No simulador, o relé de destino é o primeiro dispositivo a montante na topologia em vigor, o que equivale a supor assinaturas configuradas para cada topologia prevista.
+
+### 5.1 Ensaios de laboratório
+
+Os presets da aba *Ensaios* reproduzem o laboratório e não a Tab. 4.13 quando as duas diferem. Os ajustes vêm do arquivo do AcSELerator (`SDMT_Aquiraz Settings.rdb`, set 1 dos relés AQZ_MT, AQZ, RL1 e RL2): ciclo 2I+2T em AQZ e atraso de 0,02 s no 50 de RL2 (0,03 s na Tab. 4.13). Os demais ajustes do arquivo conferem com a Tab. 4.13, salvo o arredondamento dos valores secundários (por exemplo 51N de 21I5 com 0,05 A × 500 = 25 A, contra 26 A).
+
+Nos relatórios fase-terra, a mala injetou só as correntes de fase (I1 a I3 em um relé e I4 a I6 no outro). No SEL-751, os elementos 50N/51N usam o canal IN, que ficou sem corrente. Os tempos medidos só são reproduzidos com os elementos de neutro fora de serviço (opção `groundElements: false`), por isso esses ensaios validam os elementos de fase com corrente monofásica e não a proteção de neutro.
 
 ## 6. Simulador de eventos discretos
 
@@ -73,7 +80,7 @@ O tempo avança de evento em evento. Tipos de evento: falta, trip de relé, cheg
 
 **Desempate.** Eventos no mesmo instante são processados na ordem falta, trip, GOOSE, 50BF, disjuntor, religamento, bloqueio, SRA. Se o temporizador de um relé a montante vencer exatamente quando o disjuntor a jusante interrompe a corrente, o relé a montante também atua: margem nula é tratada como descoordenação. Esse caso aparece no ensaio 5.6.2, em que 21I5 (50 em 100 ms) e RS4 (50 em 50 ms + 50 ms de abertura) atuam juntos na primeira falta, como relatado no TCC.
 
-**Parâmetros padrão** (editáveis na aba Proteção): interrupção do disjuntor 50 ms; GOOSE 3 ms; BFD 200 ms; decisão do SRA 2 s após o último bloqueio; 1 s entre manobras telecomandadas.
+**Parâmetros padrão** (editáveis na aba Proteção): interrupção do disjuntor 50 ms; GOOSE 3 ms; processamento do relé 0 ms; BFD 200 ms; rearme do 79 em 45 s; decisão do SRA 2 s após o último bloqueio; 1 s entre manobras telecomandadas.
 
 ## 7. Recomposição automática (SRA)
 
@@ -87,12 +94,14 @@ O tempo avança de evento em evento. Tipos de evento: falta, trip de relé, cheg
 | Item | Premissa | Motivo |
 |---|---|---|
 | Carga de T7, T10 e T11 | rateio de 155 A pelo comprimento | a Tab. 4.2 só dá o total |
-| Ajustes de 21S7, 21S1, 21I2 e RS7 | iguais a dispositivos equivalentes da Tab. 4.13 | fora do estudo do TCC |
+| Ajustes de 21S7, 21S1 e 21I2 | planilha de cálculos do autor; ciclo de religamento igual ao dos alimentadores da SE AQZ | fora da Tab. 4.13 |
+| Ajustes de RS7 | fase pela planilha; neutro e 79 pelos critérios da Tab. 4.12 (22 A, 3I, 11 s) | fora da Tab. 4.13; o 51N da planilha (71,1 A) segue critério antigo |
 | Ajustes de 21F3, 21M3 e 21I7 (AGF) em Nobre | iguais aos alimentadores da SE AQZ | não informados |
 | Conexão de RP1 e RP2 (Fig. 4.1) | meio dos trechos T1, T4 e T8 | diagrama de impedâncias não disponível |
 | Religamento na topologia de Nobre | desabilitado | não especificado na fonte |
 | Rc da falta fase-terra mínima | 100 Ω | reproduz as Tabs. 4.7 e 3.6 |
-| Múltiplo máximo das curvas | 30 | coerente com os coordenogramas do TCC |
-| Interrupção do disjuntor | 50 ms | valor típico de 3 ciclos |
+| Múltiplo máximo das curvas | 30 | coerente com os coordenogramas do TCC e usado na planilha de cálculos do autor ("ajustado devido ao múltiplo") |
+| Interrupção do disjuntor | 50 ms | valor típico de 3 ciclos; é também o atraso programado na mala nos ensaios |
+| Processamento do relé | 0 ms (livre) e 13 ms (ensaios) | calibrado nos relatórios da mala |
 | Latência GOOSE | 3 ms | classe TT6 da IEC 61850-5 |
 | Fator de potência | 0,92 | só para a queda de tensão informativa |

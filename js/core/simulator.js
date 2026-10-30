@@ -36,7 +36,10 @@
     busInst50: false, // 50/50N da proteção geral de barramento habilitado
     Mmax: 30,
     reclose: true,
-    resetTime: 30, // tempo de rearme do 79 (79RSD)
+    resetTime: 45, // tempo de rearme do 79 (79RSD = 45 s na OAP 165/2013 e no relé AQZ do laboratório)
+    relayDelay: 0, // atraso de detecção e processamento do IED nos elementos 50/50N e no 50BF (0 = ideal; ensaios: 13 ms)
+    groundElements: true, // false: os relés não medem corrente de neutro (ensaios em que o canal IN não foi injetado)
+    instDelayOverrides: {}, // { relé: atraso 50/50N em s }, para reproduzir ajustes de laboratório
     sra: true,
     sraDelay: 2, // tempo de decisão do SRA após o último bloqueio
     sraStep: 1, // intervalo entre manobras telecomandadas
@@ -90,6 +93,13 @@
       const cfg = Object.assign({}, model.relays[w.relay]);
       if (opt.cycleOverrides[w.relay]) cfg.cycle = opt.cycleOverrides[w.relay];
       if (opt.deadOverrides[w.relay] != null) cfg.deadTime = opt.deadOverrides[w.relay];
+      if (opt.instDelayOverrides[w.relay] != null) {
+        const d = opt.instDelayOverrides[w.relay];
+        cfg.groups = cfg.groups.map((g) => Object.assign({}, g, {
+          phase: g.phase && Object.assign({}, g.phase, { instDelay: d }),
+          ground: g.ground && Object.assign({}, g.ground, { instDelay: d }),
+        }));
+      }
       const g = PR.selectGroup(cfg, topo0.sw[w.id].up, siapCtx);
       const rt = PR.createRelayRuntime(w.relay, cfg, g);
       rt.sw = w.id;
@@ -116,6 +126,7 @@
         slBlocks51: opt.sl && opt.slBlocks51,
         backupAdder: opt.slBlocks51 ? opt.backupAdder : null,
         inst50Enabled: rt.cfg.inst50Scheme ? opt.busInst50 : true,
+        relayDelay: opt.relayDelay || 0,
       };
     }
 
@@ -161,6 +172,7 @@
         if (s.closed && info.carrying) {
           if (inPath.has(sw)) { Iph = fr.phase; Ir = fr.residual; } else { Iph = flows.swFlow[sw] || 0; }
         }
+        if (opt.groundElements === false) Ir = 0;
         const prevPick = PR.anyPickup(rt);
         let next = null;
         if (Iph > 0 || Ir > 0) next = PR.updateRelay(rt, now, Iph, Ir, relayOpts(rt));
@@ -298,7 +310,7 @@
       }
       if (opt.bf && el !== 'MANUAL') {
         rt.bfToken = seq;
-        push(now + opt.bfd, 'bf', { relay: rt.id, token: rt.bfToken });
+        push(now + opt.bfd + (opt.relayDelay || 0), 'bf', { relay: rt.id, token: rt.bfToken });
       }
       if (st.sw[sw].stuck) {
         rt.lockout = true;
