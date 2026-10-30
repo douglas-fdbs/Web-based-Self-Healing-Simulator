@@ -80,7 +80,7 @@
     },
 
     nodes: {
-      AQZ: { kind: 'bus', label: 'SE AQZ 13,8 kV', bar: { x: 200, y1: 60, y2: 560 } },
+      AQZ: { kind: 'bus', label: 'SE AQZ 13,8 kV', bar: { x: 200, y1: 60, y2: 560, noLabel: true } },
       JAB: { kind: 'bus', label: 'SE JAB', bar: { x: 1110, y1: 70, y2: 150 } },
       MSJ: { kind: 'bus', label: 'SE MSJ', bar: { x: 1110, y1: 210, y2: 290 } },
       AGF: { kind: 'bus', label: 'SE AGF', bar: { x: 1110, y1: 350, y2: 560 } },

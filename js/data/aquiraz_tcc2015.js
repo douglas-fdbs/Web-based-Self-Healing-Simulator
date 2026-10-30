@@ -66,7 +66,7 @@
 
     nodes: {
       AQZ_SRC: { x: 120, y: 300, kind: 'source', label: 'Transformadores da SE AQZ' },
-      AQZ: { kind: 'bus', label: 'SE AQZ 13,8 kV', bar: { x: 200, y1: 60, y2: 560 } },
+      AQZ: { kind: 'bus', label: 'SE AQZ 13,8 kV', bar: { x: 200, y1: 60, y2: 560, noLabel: true } },
       ESB: { kind: 'bus', label: 'SE ESB', bar: { x: 1110, y1: 70, y2: 390 } },
       AGF: { kind: 'bus', label: 'SE AGF', bar: { x: 1110, y1: 450, y2: 560 } },
       '21I7b': { x: 261, y: 110 }, RS1a: { x: 409, y: 110 }, RS1b: { x: 431, y: 110 },

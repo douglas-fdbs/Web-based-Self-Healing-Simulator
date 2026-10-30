@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aquiraz Self-Healing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Simulador web didático da proteção (IEC 61850) e da recomposição automática da rede de distribuição de Aquiraz.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <h1>Aquiraz Self-Healing</h1>
+    <span class="sub">Proteção IEC 61850 e recomposição automática · SE AQZ 13,8 kV</span>
+  </div>
+  <div class="ctrl">
+    <label class="cap" for="scnSel">Topologia</label>
+    <select id="scnSel"></select>
+  </div>
+  <div class="ctrl">
+    <span class="cap" id="schemeCap">Esquema</span>
+    <div class="seg-toggle" id="schemeToggle" role="group" aria-labelledby="schemeCap">
+      <button type="button" data-v="conv" aria-pressed="true">Convencional</button>
+      <button type="button" data-v="iec" aria-pressed="false">IEC 61850</button>
+    </div>
+  </div>
+  <label class="switch" for="sraToggle"><input type="checkbox" id="sraToggle" checked> Self-healing</label>
+  <div class="ctrl" id="player">
+    <button type="button" class="btn icon" id="btnReset" title="Voltar à operação normal" aria-label="Voltar à operação normal"><svg viewBox="0 0 16 16"><path d="M8 2.5a5.5 5.5 0 1 1-5.2 3.7l1.4.5A4 4 0 1 0 8 4v2L4.5 3.2 8 .5z"/></svg></button>
+    <button type="button" class="btn icon" id="btnPlay" title="Reproduzir ou pausar" aria-label="Reproduzir ou pausar"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg></button>
+    <button type="button" class="btn icon" id="btnEnd" title="Ir para o fim da simulação" aria-label="Ir para o fim da simulação"><svg viewBox="0 0 16 16"><path d="M2.5 2.5v11l7-5.5zM10 2.5h2.5v11H10z"/></svg></button>
+    <select id="speedSel" aria-label="Velocidade de reprodução">
+      <option value="auto">Automática</option>
+      <option value="slow">Câmera lenta</option>
+      <option value="real">Tempo real</option>
+    </select>
+    <span class="clock" id="clock" aria-live="off">t = 0,000 s</span>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="stage" aria-label="Diagrama unifilar">
+    <div class="card">
+      <div class="diagram-wrap" id="diagramWrap">
+        <svg id="diagram" role="img" aria-label="Diagrama unifilar da rede de distribuição de Aquiraz"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="card statusbar" id="statusbar"></div>
+    <div class="card timeline">
+      <div class="tl-head"><span>Sequência de eventos</span><span id="tlInfo"></span></div>
+      <svg id="timeline" aria-label="Linha do tempo dos eventos"></svg>
+    </div>
+  </section>
+  <aside class="side card" aria-label="Painel de controle">
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+    <div class="tabpanel" id="tabpanel" role="tabpanel"></div>
+  </aside>
+</main>
+
+<script src="js/core/complex.js"></script>
+<script src="js/core/network.js"></script>
+<script src="js/core/shortcircuit.js"></script>
+<script src="js/core/protection.js"></script>
+<script src="js/core/selfhealing.js"></script>
+<script src="js/core/simulator.js"></script>
+<script src="js/data/aquiraz_tcc2015.js"></script>
+<script src="js/data/aquiraz_nobre2013.js"></script>
+<script src="js/data/lab_tests.js"></script>
+<script src="js/ui/util.js"></script>
+<script src="js/ui/diagram.js"></script>
+<script src="js/ui/charts.js"></script>
+<script src="js/ui/panels.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

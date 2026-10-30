@@ -520,8 +520,11 @@
       log, snaps, goose, metrics, options: opt,
       finalState: N.cloneState(st),
       faultInfo: lastFaultInfo,
+      siapCause: siapCtx.cause,
       relays,
-      endTime: now,
+      // instante do último evento relevante (eventos descartados, como rearmes
+      // de religadores já bloqueados, não contam)
+      endTime: Math.max(log.length ? log[log.length - 1].t : 0, snaps.length ? snaps[snaps.length - 1].t : 0),
     };
     return result;
   }
