@@ -57,47 +57,7 @@ Aba "Z(pu) Acumulado e curtocircuito" da planilha do autor (pasta ARTIGO_REI). I
 
 Tabela acima: só as 18 barras alimentadas por ESB e AGF. Nas 42 barras da planilha (incluindo as 24 alimentadas pela SE AQZ), o maior erro relativo é **0,0098%**.
 
-## 3. Curto-circuito: Tabela 3.6 de Nobre (2013), primeira topologia
-
-| Trecho | Fonte | Icc3F sim. | Icc3F ref. | Icc2F sim. | Icc2F ref. | IccFT sim. | IccFT ref. | IccFTm sim. | IccFTm ref. | Maior erro |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| T1 | AQZ | 2.321,93 | 2.321,88 | 2.010,85 | 2.010,81 | 1.506,05 | 1.506,03 | 78,25 | 78,25 | 0,0022% |
-| T2 | AQZ | 1.557,44 | 1.557,44 | 1.348,78 | 1.348,78 | 946,95 | 946,95 | 77,26 | 77,26 | 0,0002% |
-| T3 | JAB | 1.530,78 | 1.530,77 | 1.325,69 | 1.325,69 | 866,53 | 866,53 | 77,07 | 77,07 | 0,0005% |
-| T4 | AQZ | 2.305,44 | 2.305,45 | 1.996,57 | 1.996,58 | 1.493,19 | 1.493,20 | 78,24 | 78,24 | 0,0008% |
-| T5 | AQZ | 997,77 | 997,76 | 864,09 | 864,09 | 643,77 | 643,77 | 74,88 | 74,88 | 0,0004% |
-| T6 | MSJ | 4.032,88 | 4.032,87 | 3.492,58 | 3.492,57 | 1.843,26 | 1.843,25 | 78,98 | 78,98 | 0,0006% |
-| T7 | AQZ | 4.184,37 | 4.184,27 | 3.623,77 | 3.623,68 | 3.271,33 | 3.271,27 | 79,13 | 79,13 | 0,0024% |
-| T8 | AQZ | 1.998,88 | 1.998,89 | 1.731,08 | 1.731,09 | 1.260,67 | 1.260,67 | 77,93 | 77,93 | 0,0007% |
-| T9 | AQZ | 836,58 | 836,59 | 724,50 | 724,51 | 541,60 | 541,60 | 73,79 | 73,79 | 0,0003% |
-| T10 | AGF | 1.199,78 | 1.199,79 | 1.039,04 | 1.039,05 | 614,09 | 614,09 | 76,34 | 76,34 | 0,0009% |
-| T11 | AQZ | 1.461,72 | 1.461,73 | 1.265,89 | 1.265,89 | 856,08 | 856,08 | 77,09 | 77,09 | 0,0003% |
-| T12 | AQZ | 1.900,94 | 1.900,93 | 1.646,26 | 1.646,25 | 1.188,99 | 1.188,99 | 77,81 | 77,81 | 0,0008% |
-
-Maior erro relativo: **0,0024%**.
-
-## 4. Recomposição automática: Tabela 4.2 de Nobre (2013)
-
-Falta trifásica permanente no meio de cada trecho, configuração normal, esquema convencional, self-healing ligado.
-
-| Falta | Bloqueio (proteção) | Manobras do SRA (simulador) | Esperado (Nobre, Tab. 4.2) | Confere |
-|---|---|---|---|:---:|
-| T1 | 21I7 | Abrir RS1; Fechar RL1 | abre RS1; fecha RL1 | sim |
-| T2 | RS1 | nenhuma | nenhuma | sim |
-| T3 | 21F3 | nenhuma | nenhuma | sim |
-| T4 | 21I6 | Abrir RS2; Fechar RL2 | abre RS2; fecha RL2 | sim |
-| T5 | RS2 | nenhuma | nenhuma | sim |
-| T6 | 21M3 | nenhuma | nenhuma | sim |
-| T7 | 21I5 | Abrir RS3; Abrir RS4; Fechar RL3; Fechar RP2 | abre RS3, RS4; fecha RP2, RL3 | sim |
-| T8 | 21I5, RS3 | Abrir RS4; Fechar RL3; Religar 21I5 | abre RS4; fecha RL3 | sim¹ |
-| T9 | RS4 | nenhuma | nenhuma | sim |
-| T10 | 21I7 | nenhuma | nenhuma | sim |
-| T11 | RS5 | nenhuma | nenhuma | sim |
-| T12 | 21I4 | Abrir RS5; Fechar RL4 | abre RS5; fecha RL4 | sim |
-
-¹ Com os ajustes de Nobre (instantâneos sem atraso intencional), uma falta no meio de T8 (3,3 kA) supera o pickup instantâneo de 21I5 (2,5 kA) e de RS3 (1,72 kA): os dois abrem. O SRA isola a falta e religa 21I5, manobra que não aparece na Tab. 4.2 porque aquela tabela supõe atuação seletiva.
-
-## 5. Recomposição na rede atual (TCC, Fig. 4.2)
+## 3. Recomposição automática (TCC, Fig. 4.2)
 
 | Caso | Manobras do SRA | Carga sem suprimento ao final | Observação |
 |---|---|---:|---|
@@ -109,7 +69,7 @@ Falta trifásica permanente no meio de cada trecho, configuração normal, esque
 | Perda da SE ESB | Abrir 21S7; Abrir 21S1; Fechar RL1; Fechar RL2 | 0 A |  |
 | Falta no barramento 13,8 kV da SE AQZ | Abrir 21I7; Abrir 21I6; Abrir 21I5; Abrir 21I4; Fechar RL3; Fechar RL2; Fechar RL1; Abrir RS6; Fechar RL4 | 168 A | coerente com Vieira (2015): parte de 21I4 não cabe na SE AGF |
 
-## 6. Ensaios do Capítulo 5 do TCC contra os relatórios da mala de testes
+## 4. Ensaios do Capítulo 5 do TCC contra os relatórios da mala de testes
 
 Os valores "Medido" vêm dos relatórios do Sequenc (mala Conprove CE-6006, out/2015) da pasta ARTIGO_REI: instantes das transições GOOSE (GI) menos os 100 ms de pré-falta, ou intervalo entre duas transições. As correntes injetadas confirmam os pontos de falta usados (9.419 A, 10.176 A, 4.715 A, 3.309 A e 2.145 A primários).
 
@@ -166,7 +126,7 @@ Os presets reproduzem o laboratório: ajustes do arquivo do SEL-751 usado nos en
 
 ¹ No relatório, a eliminação é o início do estado pós-falta da mala, que avança 50 ms (atraso programado) depois de receber o GOOSE de trip; a recepção acrescenta de 7 a 21 ms. No simulador, é o trip mais os 50 ms de abertura do disjuntor.
 
-### 6.1 Sobrecorrente (seção 5.5 e Apêndice A)
+### 4.1 Sobrecorrente (seção 5.5 e Apêndice A)
 
 Pontos I × t dos quatro relés, com os ajustes secundários do relé ensaiado. O simulado usa as equações do motor (curva IEC limitada a M = 30 e tempo definido com 13 ms de processamento).
 
@@ -225,7 +185,7 @@ Leitura:
 - Nos ensaios monofásicos a mala injetou só as fases. Os tempos medidos só são reproduzidos com os elementos de neutro fora de serviço: com o 51N de 21I5 (25 A, dial 0,43, MI) ativo, o ensaio AQZ-RL1 sem 50BF terminaria em cerca de 200 ms, e não em 654 ms. Esses relatórios validam os elementos de fase com corrente monofásica, não a proteção de neutro.
 - O texto do TCC cita 204 ms para o ensaio 5.7.3(b); o relatório desse ensaio registra 214 ms, e 204,8 ms é o valor do ensaio 5.7.3(a).
 
-## 7. Critérios de coordenação e sensibilidade (seção 4.7.1) e pontos críticos (seção 4.7.3)
+## 5. Critérios de coordenação e sensibilidade (seção 4.7.1) e pontos críticos (seção 4.7.3)
 
 Verificação estática nas cadeias de alcance máximo da Fig. 4.6 (módulo `js/core/coordination.js`), com falta trifásica e fase-terra na barra de cada relé a jusante e no fim da zona dele. "Descoordenado" = margem menor que a abertura do disjuntor (50 ms); critério = 0,4 s entre barra e alimentador (Tab. 4.9) e 0,3 s ao longo do alimentador.
 
@@ -266,13 +226,13 @@ Sensibilidade (múltiplo do pickup na primeira barra remota, 2F para fase e FT p
 
 RS5 e RL4 ficam abaixo do múltiplo 2,4 de fase para o curto bifásico na barra remota. O TCC não informa qual curto usa no critério; com o trifásico, RS5 passa (2,68) e RL4 continua abaixo (2,35).
 
-## 8. Conferência da rede base (Fig. 4.2) com o TCC e a planilha do autor
+## 6. Conferência da rede base (Fig. 4.2) com o TCC e a planilha do autor
 
 - Impedâncias dos 16 trechos (Tab. 4.6 no simulador) contra a aba "Impedâncias dos Trechos" da planilha: maior diferença de 0,49 × 10⁻⁴ pu.
 - Valores da Fig. 4.6 (curtos e cargas por trecho): iguais aos da Tab. 4.7 e da Tab. 4.2, já conferidos acima, exceto Icc2F = 972,7 A na barra RL2 (Fig. 4.6c; a Tab. 4.7 dá 907,7 A) e IccFTm = 75,3 A na barra RS7 (Fig. 4.6d; a Tab. 4.7 dá 75,6 A).
 - As sete configurações de alcance máximo (quatro alimentadores da SE AQZ na Fig. 4.6 e os de ESB e AGF na planilha) não têm fontes em paralelo nem trecho acima da ampacidade.
 
-### 8.1 Tab. 4.8: curto e carga máximos por relé
+### 6.1 Tab. 4.8: curto e carga máximos por relé
 
 | Relé | Icc máx. sim. | Icc máx. TCC | Carga máx. sim. | Carga máx. TCC | Icc/FS | Ic/FT | Ipk/FT | RTC |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -297,7 +257,7 @@ RS5 e RL4 ficam abaixo do múltiplo 2,4 de fase para o curto bifásico na barra 
 
 Linhas 21S7, 21S1, 21I2 e RS7: aba "Dimensionamento TC e TP" da planilha (não constam da Tab. 4.8). Nos alimentadores da SE AQZ, Icc/FS = 509 A supera em 1,8% o primário do TC escolhido no TCC (500 A).
 
-### 8.2 Tab. 4.13 contra os critérios de tempo (Tabs. 4.11 e 4.12)
+### 6.2 Tab. 4.13 contra os critérios de tempo (Tabs. 4.11 e 4.12)
 
 | Relé | 51P na própria barra (3F) | 51N na própria barra (FT) | Alvo | Dial de fase |
 |---|---:|---:|---:|---:|
@@ -319,7 +279,7 @@ Linhas 21S7, 21S1, 21I2 e RS7: aba "Dimensionamento TC e TP" da planilha (não c
 
 Os religadores da SE atuam em 200 ms na própria barra, como pede a Tab. 4.11, e RS4 em 97 ms (alvo de 100 ms). Os demais religadores de linha estão com o dial no mínimo do SEL-751 para curvas IEC (0,05, faixa citada na OAP) e ficam entre 103 e 342 ms na fase: a planilha do autor calcula dials menores que 0,05, ou tempos negativos, e adota o mínimo. No neutro todos ficam abaixo de 100 ms.
 
-### 8.3 Conjunto extra: ajustes de campo (Anexo B)
+### 6.3 Conjunto extra: ajustes de campo (Anexo B)
 
 Com os ajustes do Anexo B (atrasos do 50/50N: 0,1 s nos alimentadores, pela OAP 165/2013, e os da Tab. 4.13 nos religadores de linha, porque o Anexo B não os informa):
 

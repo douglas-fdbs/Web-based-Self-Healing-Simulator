@@ -9,7 +9,7 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..', 'js');
 ['core/complex', 'core/network', 'core/shortcircuit', 'core/protection', 'core/selfhealing', 'core/simulator', 'core/coordination',
-  'data/aquiraz_tcc2015', 'data/aquiraz_nobre2013', 'data/lab_tests'].forEach((f) => require(path.join(root, `${f}.js`)));
+  'data/aquiraz_tcc2015', 'data/lab_tests'].forEach((f) => require(path.join(root, `${f}.js`)));
 const SH = globalThis.SH;
 const N = SH.network;
 const SC = SH.shortcircuit;
@@ -64,53 +64,11 @@ p();
 p(`Tabela acima: só as 18 barras alimentadas por ESB e AGF. Nas ${SH.scenarios.tcc2015.validation.planilha.length} barras da planilha (incluindo as 24 alimentadas pela SE AQZ), o maior erro relativo é **${nf(worstPl, 4)}%**.`);
 p();
 
-// ---------------------------------------------------------------- Tab 3.6 Nobre
-const nob = N.buildModel(SH.scenarios.nobre2013);
-p('## 3. Curto-circuito: Tabela 3.6 de Nobre (2013), primeira topologia');
-p();
-p('| Trecho | Fonte | Icc3F sim. | Icc3F ref. | Icc2F sim. | Icc2F ref. | IccFT sim. | IccFT ref. | IccFTm sim. | IccFTm ref. | Maior erro |');
-p('|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|');
-let worst36 = 0;
-SH.scenarios.nobre2013.validation.tab36.forEach((v) => {
-  const r = SC.pathFault(nob, v.source, v.path);
-  const sim = [r.i3f, r.i2f, r.ift, r.iftm];
-  const e = Math.max(...sim.map((x, i) => Math.abs((x - v.tcc[4 + i]) / v.tcc[4 + i]) * 100));
-  worst36 = Math.max(worst36, e);
-  p(`| ${v.seg} | ${v.source} | ${sim.map((x, i) => `${nf(x, 2)} | ${nf(v.tcc[4 + i], 2)}`).join(' | ')} | ${nf(e, 4)}% |`);
-});
-p();
-p(`Maior erro relativo: **${nf(worst36, 4)}%**.`);
-p();
-
 // ---------------------------------------------------------------- Recomposição
 // manobras do SRA como "Verbo DISPOSITIVO" (dispositivo lido do evento, não do texto)
 const sraActs = (res, model = tcc) => res.log.filter((e) => e.cat === 'sra' && e.dev && /^(Abrir|Fechar|Religar)/.test(e.text))
   .map((e) => `${e.text.split(' ')[0]} ${model.switches[e.dev].label || e.dev}`);
-p('## 4. Recomposição automática: Tabela 4.2 de Nobre (2013)');
-p();
-p('Falta trifásica permanente no meio de cada trecho, configuração normal, esquema convencional, self-healing ligado.');
-p();
-p('| Falta | Bloqueio (proteção) | Manobras do SRA (simulador) | Esperado (Nobre, Tab. 4.2) | Confere |');
-p('|---|---|---|---|:---:|');
-SH.scenarios.nobre2013.validation.tab42.forEach((v) => {
-  const seg = nob.segments[v.fault] ? v.fault : `${v.fault}a`;
-  const res = SH.simulator.run(nob, { script: [{ t: 0, type: 'fault', spec: { kind: 'segment', seg, x: 0.5, type: '3F' } }] });
-  const blk = res.log.filter((e) => e.cat === 'bloqueio').map((e) => nob.switches[e.dev].label || e.dev).join(', ');
-  const acts = sraActs(res, nob);
-  const opened = acts.filter((a) => a.startsWith('Abrir')).map((a) => a.slice(6));
-  const closed = acts.filter((a) => a.startsWith('Fechar')).map((a) => a.slice(7));
-  const reclosed = acts.filter((a) => a.startsWith('Religar')).map((a) => a.slice(8));
-  const okOpen = JSON.stringify(opened.slice().sort()) === JSON.stringify(v.open.slice().sort());
-  const okClose = JSON.stringify(closed.slice().sort()) === JSON.stringify(v.close.slice().sort());
-  const exp = v.open.length || v.close.length ? `abre ${v.open.join(', ') || '-'}; fecha ${v.close.join(', ') || '-'}` : 'nenhuma';
-  const sim = acts.length ? acts.join('; ') : 'nenhuma';
-  p(`| ${v.fault} | ${blk} | ${sim} | ${exp} | ${okOpen && okClose ? 'sim' : 'não'}${reclosed.length ? '¹' : ''} |`);
-});
-p();
-p('¹ Com os ajustes de Nobre (instantâneos sem atraso intencional), uma falta no meio de T8 (3,3 kA) supera o pickup instantâneo de 21I5 (2,5 kA) e de RS3 (1,72 kA): os dois abrem. O SRA isola a falta e religa 21I5, manobra que não aparece na Tab. 4.2 porque aquela tabela supõe atuação seletiva.');
-p();
-
-p('## 5. Recomposição na rede atual (TCC, Fig. 4.2)');
+p('## 3. Recomposição automática (TCC, Fig. 4.2)');
 p();
 p('| Caso | Manobras do SRA | Carga sem suprimento ao final | Observação |');
 p('|---|---|---:|---|');
@@ -132,7 +90,7 @@ tccCases.forEach(([name, input, obs]) => {
 p();
 
 // ---------------------------------------------------------------- Ensaios
-p('## 6. Ensaios do Capítulo 5 do TCC contra os relatórios da mala de testes');
+p('## 4. Ensaios do Capítulo 5 do TCC contra os relatórios da mala de testes');
 p();
 p('Os valores "Medido" vêm dos relatórios do Sequenc (mala Conprove CE-6006, out/2015) da pasta ARTIGO_REI: instantes das transições GOOSE (GI) menos os 100 ms de pré-falta, ou intervalo entre duas transições. As correntes injetadas confirmam os pontos de falta usados (9.419 A, 10.176 A, 4.715 A, 3.309 A e 2.145 A primários).');
 p();
@@ -155,7 +113,7 @@ SH.labs.tests.forEach((t) => {
 p();
 p(SH.labs.CLEAR_NOTE);
 p();
-p('### 6.1 Sobrecorrente (seção 5.5 e Apêndice A)');
+p('### 4.1 Sobrecorrente (seção 5.5 e Apêndice A)');
 p();
 p(`Pontos I × t dos quatro relés, com os ajustes secundários do relé ensaiado. O simulado usa as equações do motor (curva IEC limitada a M = 30 e tempo definido com ${nf(SH.labs.LAB_DELAY * 1000, 0)} ms de processamento).`);
 p();
@@ -182,7 +140,7 @@ p('- Nos ensaios monofásicos a mala injetou só as fases. Os tempos medidos só
 p('- O texto do TCC cita 204 ms para o ensaio 5.7.3(b); o relatório desse ensaio registra 214 ms, e 204,8 ms é o valor do ensaio 5.7.3(a).');
 p();
 // ---------------------------------------------------------------- Critérios
-p('## 7. Critérios de coordenação e sensibilidade (seção 4.7.1) e pontos críticos (seção 4.7.3)');
+p('## 5. Critérios de coordenação e sensibilidade (seção 4.7.1) e pontos críticos (seção 4.7.3)');
 p();
 p('Verificação estática nas cadeias de alcance máximo da Fig. 4.6 (módulo `js/core/coordination.js`), com falta trifásica e fase-terra na barra de cada relé a jusante e no fim da zona dele. "Descoordenado" = margem menor que a abertura do disjuntor (50 ms); critério = 0,4 s entre barra e alimentador (Tab. 4.9) e 0,3 s ao longo do alimentador.');
 p();
@@ -219,7 +177,7 @@ p();
 p('RS5 e RL4 ficam abaixo do múltiplo 2,4 de fase para o curto bifásico na barra remota. O TCC não informa qual curto usa no critério; com o trifásico, RS5 passa (2,68) e RL4 continua abaixo (2,35).');
 p();
 // ---------------------------------------------------------------- Fig. 4.2 x TCC e planilha
-p('## 8. Conferência da rede base (Fig. 4.2) com o TCC e a planilha do autor');
+p('## 6. Conferência da rede base (Fig. 4.2) com o TCC e a planilha do autor');
 p();
 const zr = Object.entries(SH.scenarios.tcc2015.validation.planilhaZ).map(([t, ref]) => {
   const z = tcc.segments[t];
@@ -229,7 +187,7 @@ p(`- Impedâncias dos 16 trechos (Tab. 4.6 no simulador) contra a aba "Impedânc
 p('- Valores da Fig. 4.6 (curtos e cargas por trecho): iguais aos da Tab. 4.7 e da Tab. 4.2, já conferidos acima, exceto Icc2F = 972,7 A na barra RL2 (Fig. 4.6c; a Tab. 4.7 dá 907,7 A) e IccFTm = 75,3 A na barra RS7 (Fig. 4.6d; a Tab. 4.7 dá 75,6 A).');
 p('- As sete configurações de alcance máximo (quatro alimentadores da SE AQZ na Fig. 4.6 e os de ESB e AGF na planilha) não têm fontes em paralelo nem trecho acima da ampacidade.');
 p();
-p('### 8.1 Tab. 4.8: curto e carga máximos por relé');
+p('### 6.1 Tab. 4.8: curto e carga máximos por relé');
 p();
 p('| Relé | Icc máx. sim. | Icc máx. TCC | Carga máx. sim. | Carga máx. TCC | Icc/FS | Ic/FT | Ipk/FT | RTC |');
 p('|---|---:|---:|---:|---:|---:|---:|---:|---:|');
@@ -237,7 +195,7 @@ SH.coordination.ctCheck(tcc).forEach((r) => p(`| ${r.dev} | ${nf(r.icc, 1)} | ${
 p();
 p('Linhas 21S7, 21S1, 21I2 e RS7: aba "Dimensionamento TC e TP" da planilha (não constam da Tab. 4.8). Nos alimentadores da SE AQZ, Icc/FS = 509 A supera em 1,8% o primário do TC escolhido no TCC (500 A).');
 p();
-p('### 8.2 Tab. 4.13 contra os critérios de tempo (Tabs. 4.11 e 4.12)');
+p('### 6.2 Tab. 4.13 contra os critérios de tempo (Tabs. 4.11 e 4.12)');
 p();
 p('| Relé | 51P na própria barra (3F) | 51N na própria barra (FT) | Alvo | Dial de fase |');
 p('|---|---:|---:|---:|---:|');
@@ -251,7 +209,7 @@ SH.coordination.check(tcc, {}).sensitivity.forEach((x) => {
 p();
 p('Os religadores da SE atuam em 200 ms na própria barra, como pede a Tab. 4.11, e RS4 em 97 ms (alvo de 100 ms). Os demais religadores de linha estão com o dial no mínimo do SEL-751 para curvas IEC (0,05, faixa citada na OAP) e ficam entre 103 e 342 ms na fase: a planilha do autor calcula dials menores que 0,05, ou tempos negativos, e adota o mínimo. No neutro todos ficam abaixo de 100 ms.');
 p();
-p('### 8.3 Conjunto extra: ajustes de campo (Anexo B)');
+p('### 6.3 Conjunto extra: ajustes de campo (Anexo B)');
 p();
 p('Com os ajustes do Anexo B (atrasos do 50/50N: 0,1 s nos alimentadores, pela OAP 165/2013, e os da Tab. 4.13 nos religadores de linha, porque o Anexo B não os informa):');
 p();

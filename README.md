@@ -6,7 +6,9 @@ O simulador foi desenvolvido com assistência do Claude (Anthropic) pela Equipe 
 
 A referência principal é o TCC de Mário Sérgio de Lima Rodrigues (UFC, 2015), *Teste e validação das funções de proteção baseadas na norma IEC 61850 propostas para implantação no projeto piloto da rede de distribuição inteligente de Aquiraz*.
 
-**Guia de uso passo a passo:** [`docs/GUIA_DE_USO.md`](docs/GUIA_DE_USO.md) (o resumo está na aba *Guia* do site). Ele explica cada parte da tela, traz roteiros com o que se obtém em cada um e indica onde está cada figura e tabela do TCC.
+**Acesso pela web:** <https://douglas-fdbs.github.io/Web-based-Self-Healing-Simulator/> (GitHub Pages, publicado a partir da branch `main`; veja a seção *Publicação no GitHub Pages*).
+
+**Guia de uso passo a passo:** [`docs/GUIA_DE_USO.md`](docs/GUIA_DE_USO.md) (o resumo abre no botão *Guia* do site). Ele explica cada parte da tela, traz roteiros com o que se obtém em cada um e indica onde está cada figura e tabela do TCC.
 
 ## Como executar
 
@@ -24,16 +26,24 @@ A referência principal é o TCC de Mário Sérgio de Lima Rodrigues (UFC, 2015)
    npm test
    ```
 
-4. Para publicar no GitHub Pages: *Settings → Pages → Deploy from a branch*, pasta raiz. O `index.html` funciona sem alterações.
+4. Para publicar no GitHub Pages, veja a seção abaixo.
+
+## Publicação no GitHub Pages
+
+O site é estático (HTML, CSS e JavaScript, sem etapa de build), então o GitHub Pages serve o `index.html` da raiz como está. O arquivo `.nojekyll` desliga o processamento Jekyll.
+
+Configuração, feita uma vez por quem administra o repositório:
+
+1. O repositório precisa ser público (já é) ou estar num plano pago do GitHub.
+2. *Settings → Pages → Build and deployment → Source: Deploy from a branch*.
+3. *Branch: `main`*, pasta */ (root)*, *Save*.
+4. Em um a dois minutos o endereço <https://douglas-fdbs.github.io/Web-based-Self-Healing-Simulator/> fica no ar. Cada push ou merge na `main` atualiza o site.
 
 ## O que o simulador faz
 
-**Topologias.** Duas redes selecionáveis na barra superior:
+**Rede.** Topologia da Fig. 4.2 do TCC ("Topologia do sistema de distribuição Aquiraz"), com os dados elétricos das Tabs. 4.1 a 4.13 e dos Anexos A e B de Rodrigues (2015).
 
-| Opção | Figura no TCC | Origem dos dados elétricos |
-|---|---|---|
-| Fig. 4.2: rede do TCC (base) | Fig. 4.2, "Topologia do sistema de distribuição Aquiraz" | Rodrigues (2015), Tabs. 4.1 a 4.13 e Anexos A e B |
-| Fig. 4.1: primeira topologia (extra) | Fig. 4.1, "Primeira topologia do sistema de distribuição Aquiraz" | Nobre (2013), Tabs. 3.1 a 3.8, 4.1, 4.2 e 4.13 |
+**Interface.** O painel lateral traz só os controles (falta, esquema, opções IEC 61850, ensaios). Tabelas, gráficos, o guia e as fontes abrem em janelas que podem ser arrastadas pelo título, redimensionadas pelo canto e fechadas no X ou com Esc; várias podem ficar abertas ao mesmo tempo e as de carregamento e de ajustes acompanham a animação. Tema claro ou escuro no botão da barra superior.
 
 **Contingências.** Falta em qualquer ponto de qualquer trecho (clique no diagrama): trifásica, bifásica, fase-terra franca, fase-terra mínima (Rc = 100 Ω) ou com resistência definida pelo usuário; permanente ou temporária. Também perda de subestação, falta no barramento de 13,8 kV da SE AQZ, falha de abertura de disjuntor e comandos manuais de abrir/fechar com intertravamento contra paralelismo.
 
@@ -60,8 +70,6 @@ Resumo (detalhes em [`docs/VALIDACAO.md`](docs/VALIDACAO.md), gerado por `node t
 | Curtos 3F, 2F, FT e FTm nas 18 barras da Tab. 4.7 do TCC | maior erro de 0,061% |
 | Curtos da planilha de cálculos do TCC (42 barras, fontes AQZ, ESB e AGF) | maior erro de 0,0098% |
 | Impedâncias dos trechos a partir dos cabos (Tabs. 4.4 e 4.5 contra Tab. 4.6) | diferença máxima de 0,0006 pu |
-| Curtos da Tab. 3.6 de Nobre (2013) | maior erro de 0,0024% |
-| Recomposição para falta em cada trecho (Tab. 4.2 de Nobre) | 12 de 12 casos com as mesmas manobras |
 | Recomposição da Fig. 4.3 do TCC (falta em T1) | abre RS1 e fecha RL1, como no TCC |
 | Ensaios do Cap. 5 contra os relatórios da mala (18 ensaios) | mesmos comportamentos; tempos de trip e intervalos entre GOOSEs a até 12 ms dos medidos, com o processamento do relé calibrado em 13 ms |
 | Ensaios de sobrecorrente do Apêndice A (40 pontos I × t, 4 relés) | curvas a até 1,7% e tempo definido a até 10 ms dos medidos |
@@ -80,8 +88,7 @@ A base do simulador é a que o TCC documenta como final:
 
 Extras, para comparação, sem substituir a base:
 
-- **Fig. 4.1** (primeira topologia, com os dados de Nobre, 2013), no seletor de topologia;
-- **Anexo B** (ajustes de campo), no seletor da aba *Proteção*. O Anexo B não informa os atrasos do 50/50N: usam-se 0,1 s nos alimentadores (OAP 165/2013) e os atrasos da Tab. 4.13 nos religadores de linha;
+- **Anexo B** (ajustes de campo), no seletor *Conjunto de ajustes* da aba *Proteção*. O Anexo B não informa os atrasos do 50/50N: usam-se 0,1 s nos alimentadores (OAP 165/2013) e os atrasos da Tab. 4.13 nos religadores de linha;
 - **ajustes do laboratório** (arquivo do SEL-751), só nos presets da aba *Ensaios*.
 
 ## Estrutura
@@ -96,8 +103,8 @@ js/core/                   motor de cálculo, sem dependência de interface
   protection.js            curvas IEC, elementos 50/51, ciclo 79, grupos de ajuste
   simulator.js             simulador de eventos discretos (proteção, GOOSE, 50BF, 79, SRA)
   selfhealing.js           localização, isolamento e restauração
-js/data/                   dados das redes, ensaios e conteúdo da aba Guia, com a origem de cada valor
-js/ui/                     diagrama SVG, gráficos e painéis
+js/data/                   dados da rede, ensaios e conteúdo do Guia, com a origem de cada valor
+js/ui/                     diagrama SVG, gráficos, painéis e janelas flutuantes
 js/app.js                  controlador da interface e reprodução animada
 tests/validation.test.js   validação automática (node --test)
 tools/                     relatório de validação e gerador de arquivo único
@@ -108,7 +115,7 @@ Os arquivos de `js/core` e `js/data` funcionam tanto no navegador quanto no Node
 
 ## Premissas e limitações
 
-As premissas adotadas onde as fontes não informam o dado aparecem na aba *Fontes* e em [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md). As principais:
+As premissas adotadas onde as fontes não informam o dado aparecem na janela *Fontes e premissas* (link no rodapé do site) e em [`docs/METODOLOGIA.md`](docs/METODOLOGIA.md). As principais:
 
 - carga dos trechos T7, T10 e T11 (a Tab. 4.2 informa só o total de 155 A) rateada pelo comprimento;
 - ajustes dos alimentadores das SEs ESB e AGF e do religador RS7 (fora da Tab. 4.13) tirados da planilha de cálculos do autor e dos critérios das Tabs. 4.11 e 4.12;
@@ -116,12 +123,12 @@ As premissas adotadas onde as fontes não informam o dado aparecem na aba *Fonte
 - tempos fixos de interrupção do disjuntor (50 ms) e de transferência GOOSE (3 ms); processamento do relé de 0 ms na simulação livre (cálculo ideal, como no TCC) e de 13 ms nos ensaios, ajustável na aba *Proteção*;
 - relés não direcionais, como o SEL-751 nos ensaios do TCC.
 
-Divergências encontradas nas próprias fontes (por exemplo, o comprimento de T9 na Fig. 4.2 e na Tab. 4.5) também estão listadas na aba *Fontes*.
+Divergências encontradas nas próprias fontes (por exemplo, o comprimento de T9 na Fig. 4.2 e na Tab. 4.5) também estão listadas nessa janela.
 
 ## Referências
 
 - RODRIGUES, M. S. de L. *Teste e validação das funções de proteção baseadas na norma IEC 61850 propostas para implantação no projeto piloto da rede de distribuição inteligente de Aquiraz*. Monografia (Graduação em Engenharia Elétrica), Universidade Federal do Ceará, Fortaleza, 2015.
-- NOBRE, F. W. de M. *Estudo para a definição dos grupos de ajuste da proteção da rede de distribuição Aquiraz*. Monografia (Graduação em Engenharia Elétrica), Universidade Federal do Ceará, Fortaleza, 2013.
+- NOBRE, F. W. de M. *Estudo para a definição dos grupos de ajuste da proteção da rede de distribuição Aquiraz*. Monografia (Graduação em Engenharia Elétrica), Universidade Federal do Ceará, Fortaleza, 2013. (Critério de recomposição pela maior carga restabelecida e grupos de ajuste por contingência, adotados no TCC. A primeira topologia, Fig. 4.1, foi implementada nas versões iniciais e removida a pedido da equipe.)
 - VIEIRA, R. B. *Estudo das proteções para implantação no projeto piloto de redes inteligentes da Companhia Energética do Ceará em Aquiraz*. Monografia (Graduação em Engenharia Elétrica), Universidade Federal do Ceará, Fortaleza, 2015. (Citado no TCC como Vieira, 2015.)
 - Pasta ARTIGO_REI (Google Drive da equipe): planilha de cálculos do TCC, arquivo de ajustes dos relés SEL-751 dos ensaios, relatórios da mala Conprove CE-6006, OAP 165/2013 da SE AQZ e estudos do ProteCAD.
 - IEC 61850-5 e IEC 61850-8-1 (requisitos de comunicação e mapeamento GOOSE); IEC 60255-151 (curvas de tempo inverso).

@@ -277,7 +277,6 @@
     { id: 'ex-ftm', scenario: 'tcc2015', title: 'Falta fase-terra mínima em T5', description: 'Falta com resistência de contato de 100 Ω: só os elementos de neutro enxergam a corrente.', fault: { kind: 'segment', seg: 'T5', x: 0.6, type: 'FTm' } },
     { id: 'ex-esb', scenario: 'tcc2015', title: 'Perda da SE Eusébio', description: 'O SRA isola o barramento sem fonte e transfere T3/T4 e T7/T10/T11 para a SE AQZ.', sourceLoss: 'ESB' },
     { id: 'ex-bus', scenario: 'tcc2015', title: 'Falta no barramento 13,8 kV da SE AQZ', description: 'AQZ_MT elimina a falta; o SRA abre os quatro alimentadores e recompõe o que a ampacidade permite.', fault: { kind: 'bus', node: 'AQZ', type: '3F' } },
-    { id: 'ex-n-t7', scenario: 'nobre2013', title: 'Nobre: falta em T7', description: 'Recomposição da Tab. 4.2 de Nobre: abre RS3 e RS4, fecha RL3 (T9 pela SE AGF) e RP2 (T8 por 21I6).', fault: { kind: 'segment', seg: 'T7', x: 0.5, type: '3F' } },
   ];
 
   /** Avalia uma medida de um ensaio sobre o resultado da simulação. */

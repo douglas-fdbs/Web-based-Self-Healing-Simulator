@@ -1,37 +1,43 @@
 # Guia de uso do simulador Aquiraz Self-Healing
 
-Este guia explica, passo a passo, como usar o site, o que cada parte da tela mostra e onde encontrar cada resultado do TCC de Rodrigues (2015). O mesmo conteúdo, resumido, está na aba **Guia** do próprio site.
+Este guia explica, passo a passo, como usar o site, o que cada parte da tela mostra e onde encontrar cada resultado do TCC de Rodrigues (2015). O mesmo conteúdo, resumido, abre no botão **Guia** da barra superior do site.
 
 ## 1. Como abrir
 
 | Forma | Como fazer |
 |---|---|
-| Link publicado | Abra o link do artefato no navegador. Não precisa instalar nada. |
+| Link publicado | Abra <https://douglas-fdbs.github.io/Web-based-Self-Healing-Simulator/> (GitHub Pages) ou o link do artefato. Não precisa instalar nada. |
 | Arquivo local | Abra `index.html` (pasta do repositório) no Chrome, Edge ou Firefox. Funciona sem servidor e sem internet (só as fontes tipográficas vêm da internet). |
 | Arquivo único | Rode `npm run build:standalone` e envie `dist/aquiraz-self-healing.html`. |
 
-O site guarda no navegador a topologia, o conjunto de ajustes e as opções da última visita. O botão **Restaurar ajustes e parâmetros originais** (aba Proteção) volta tudo ao padrão.
+O site guarda no navegador o tema, o conjunto de ajustes e as opções da última visita. O botão **Restaurar ajustes e parâmetros originais** (aba Proteção) volta tudo ao padrão.
 
 ## 2. Mapa da tela
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Barra superior: Topologia · Esquema (Convencional | IEC 61850) ·          │
+│ Barra superior: Guia · Tema · Esquema (Convencional | IEC 61850) ·       │
 │ Self-healing · reprodução (voltar, play, ir ao fim, velocidade, tempo)    │
 ├───────────────────────────────────────────────┬──────────────────────────┤
 │ Diagrama unifilar animado (Fig. 4.2)          │ Painel lateral com abas: │
 │  legenda e chave "Correntes nos trechos"      │ Falta · Eventos ·        │
 ├───────────────────────────────────────────────┤ Análises · Proteção ·    │
-│ Barra de status (operação normal ou           │ IEC 61850 · Ensaios ·    │
-│ reconfigurada, carga suprida e sem suprimento)│ Fontes · Guia            │
+│ Barra de status (operação normal ou           │ IEC 61850 · Ensaios      │
+│ reconfigurada, carga suprida e sem suprimento)│                          │
 ├───────────────────────────────────────────────┤                          │
 │ Sequência de eventos (linha do tempo)         │                          │
-└───────────────────────────────────────────────┴──────────────────────────┘
+├───────────────────────────────────────────────┘                          │
+│ Rodapé: Fontes e premissas                                               │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Diagrama.** Cada trecho tem a cor da subestação que o alimenta: azul (Aquiraz), roxo (Eusébio) e laranja (Água Fria); cinza é trecho sem tensão. Quadrado vermelho é chave fechada e verde, aberta, como na Fig. 4.3 do TCC. Durante a simulação aparecem o raio no ponto da falta, a corrente de falta em vermelho, os selos **SL** (relé bloqueado por seletividade lógica) e **BLQ** (religamento bloqueado), a contagem regressiva do tempo morto e os arcos das mensagens GOOSE (azul-claro para bloqueio, rosa para 50BF). A chave **Correntes nos trechos** mostra a corrente de carga de cada trecho.
 
 **Reprodução.** O tempo corre em câmera lenta automática nos transitórios de milissegundos e acelera nos tempos mortos. Use **Câmera lenta** ou **Tempo real** no seletor de velocidade, **voltar** para o início, **ir ao fim** para o estado final. Clique em qualquer evento da linha do tempo ou do registro para ir até aquele instante.
+
+**Janelas.** Tabelas, gráficos, o guia e as fontes abrem em janelas sobre o diagrama. Os botões que abrem janela têm o sinal ↗ (ou "aberta", se a janela já estiver na tela). Arraste a janela pelo título, redimensione pelo canto inferior direito e feche no X ou com Esc (fecha a da frente). Várias podem ficar abertas; clique em uma para trazê-la à frente. As janelas se atualizam quando a simulação muda, e as de carregamento e de ajustes acompanham a animação. No celular, a janela ocupa a parte de baixo da tela.
+
+**Tema.** O botão com a lua (ou o sol) alterna entre os temas claro e escuro; a escolha fica salva no navegador.
 
 **Barra de status.** Indica se a rede está na operação normal ou reconfigurada, se há falta presente, a carga suprida e a sem suprimento (em ampères), o esquema e o self-healing. Quando o conjunto de ajustes não é o da base, aparece o campo **Ajustes**. O botão **Voltar à operação normal** reinicia a rede.
 
@@ -40,13 +46,13 @@ O site guarda no navegador a topologia, o conjunto de ajustes e as opções da �
 | Aba | Conteúdo |
 |---|---|
 | **Falta** | Sem seleção: instruções e cenários prontos. Com um trecho selecionado: posição, tipo e resistência da falta, opção de falta temporária e correntes de curto no ponto. Com uma chave selecionada: ajustes do relé, comandos de abrir e fechar e simulação de disjuntor travado. Com o barramento de uma SE selecionado: perda e religamento da SE. |
-| **Eventos** | Diagrama de tempos no estilo do Sequenc (como as Figs. 5.12 a 5.22) e registro completo de eventos, exportável em CSV. |
-| **Análises** | Resumo da última simulação, conferência com a Tab. 4.8 (curto e carga máximos por relé), carregamento de cada trecho e comparação dos curtos com a Tab. 4.7. |
-| **Proteção** | Coordenogramas (caminho selecionado ou Figs. 4.9 a 4.13), escolha do conjunto de ajustes (Tab. 4.13 ou Anexo B), tabela de ajustes editável com o estado do religamento, parâmetros da simulação, verificação dos critérios de coordenação e sensibilidade e famílias de curvas (Fig. 2.3). |
-| **IEC 61850** | Liga e desliga seletividade lógica, 50BF, instantâneo da barra, bloqueio estendido ao 51 e supervisão da qualidade da mensagem; latência, BFD, somador e perda de mensagens; datasets da Tab. 5.1 e lista de GOOSEs da última simulação. |
-| **Ensaios** | Ensaios de sobrecorrente do Apêndice A (gráficos I × t) e os ensaios de religamento, seletividade lógica e 50BF do Cap. 5 e dos Apêndices B e C, com o valor citado no TCC, o medido no relatório da mala e o simulado. |
-| **Fontes** | Topologia, premissas, divergências encontradas nas fontes, modelagem e referências. |
-| **Guia** | Resumo deste documento. |
+| **Eventos** | Registro completo de eventos, exportável em CSV. Janelas: **Diagrama de tempos** (estilo do Sequenc, como as Figs. 5.12 a 5.22) e **Resumo** da simulação. |
+| **Análises** | Janelas: **Carregamento dos trechos**, **Curtos-circuitos nas barras** (Tab. 4.7) e **Curto e carga máximos por relé** (Tab. 4.8). |
+| **Proteção** | Escolha do conjunto de ajustes (Tab. 4.13 ou Anexo B). Janelas: **Coordenogramas** (caminho selecionado ou Figs. 4.9 a 4.13), **Tabela de ajustes** editável com o estado do religamento, **Critérios de coordenação e sensibilidade**, **Famílias de curvas** (Fig. 2.3) e **Parâmetros da simulação**. |
+| **IEC 61850** | Liga e desliga seletividade lógica, 50BF, instantâneo da barra, bloqueio estendido ao 51 e supervisão da qualidade da mensagem; latência, BFD, somador e perda de mensagens. Janelas: **Datasets GOOSE** (Tab. 5.1) e **Mensagens GOOSE** da última simulação. |
+| **Ensaios** | Botão **Executar** de cada ensaio de religamento, seletividade lógica e 50BF do Cap. 5 e dos Apêndices B e C; o resultado (valor citado no TCC, medido no relatório da mala e simulado) abre em janela. Janela **Pontos I × t dos relés ensaiados** (Apêndice A). |
+
+Fora das abas: o botão **Guia** (barra superior) abre o resumo deste documento, e o link **Fontes e premissas** (rodapé) abre os dados, as premissas, as divergências encontradas nas fontes, a modelagem e as referências.
 
 ## 4. Roteiros passo a passo
 
@@ -56,7 +62,7 @@ O site guarda no navegador a topologia, o conjunto de ajustes e as opções da �
 2. Acompanhe no diagrama: 21I7 abre pelo instantâneo, religa, abre de novo e, depois de três religamentos, bloqueia.
 3. Dois segundos depois do bloqueio, o self-healing (SRA) localiza a falta em T1, abre RS1 e fecha RL1.
 4. **O que você obtém:** o trecho T2 volta a ser alimentado pela SE Eusébio (cor roxa), como na Fig. 4.3 do TCC. A barra de status mostra a carga que ficou sem suprimento (só a de T1).
-5. Na aba **Eventos**, use **Ciclo completo (s)** no diagrama de tempos para ver as quatro aberturas de 21I7 (50, 50, 51, 51) e os tempos mortos de 10 s.
+5. Na aba **Eventos**, abra **Diagrama de tempos** e use **Ciclo completo (s)** para ver as quatro aberturas de 21I7 (50, 50, 51, 51) e os tempos mortos de 10 s.
 
 ### Roteiro 2. Falta em qualquer ponto
 
@@ -71,51 +77,51 @@ O site guarda no navegador a topologia, o conjunto de ajustes e as opções da �
 1. Clique no início do trecho T9 (logo depois de RS4) e aplique uma falta trifásica com o esquema **Convencional**.
 2. Veja que RS4 e 21I5 abrem juntos: é o segundo ponto crítico da seção 4.7.3 do TCC.
 3. Clique em **Voltar à operação normal**, mude o esquema para **IEC 61850** e repita.
-4. **O que você obtém:** RS4 envia GOOSE de bloqueio (arco azul-claro), 21I5 fica com o selo SL e só RS4 abre. Na aba **IEC 61850** aparece a lista das mensagens trocadas.
+4. **O que você obtém:** RS4 envia GOOSE de bloqueio (arco azul-claro), 21I5 fica com o selo SL e só RS4 abre. Na aba **IEC 61850**, **Mensagens GOOSE** lista as mensagens trocadas.
 
 ### Roteiro 4. Falha de disjuntor (50BF)
 
 1. Selecione o esquema **IEC 61850**.
 2. Clique na chave RS4 e, na aba **Falta**, use **Simular falha de abertura (disjuntor travado)**.
 3. Aplique uma falta no início de T9.
-4. **O que você obtém:** RS4 dá trip, mas a corrente continua; 200 ms depois o 50BF envia GOOSE de trip (arco rosa) e 21I5 abre por trip remoto. O diagrama de tempos (aba **Eventos**) mostra o intervalo entre os dois trips.
+4. **O que você obtém:** RS4 dá trip, mas a corrente continua; 200 ms depois o 50BF envia GOOSE de trip (arco rosa) e 21I5 abre por trip remoto. O **Diagrama de tempos** (aba **Eventos**) mostra o intervalo entre os dois trips.
 
 ### Roteiro 5. Coordenogramas do TCC (Figs. 4.9 a 4.13)
 
-1. Abra a aba **Proteção**.
-2. No seletor **Coordenograma**, escolha uma das figuras: 4.9 (21I7), 4.10 (21I6), 4.11 (21I5), 4.12 (21I4) ou 4.13 (alimentador e barra).
+1. Na aba **Proteção**, clique em **Coordenogramas**.
+2. No seletor da janela, escolha uma das figuras: 4.9 (21I7), 4.10 (21I6), 4.11 (21I5), 4.12 (21I4) ou 4.13 (alimentador e barra).
 3. **O que você obtém:** os coordenogramas de fase e de neutro da cadeia de alcance máximo da Fig. 4.6, com os ajustes do conjunto ativo, no mesmo formato do TCC.
-4. A opção **Caminho selecionado** desenha os relés entre a falta selecionada e a fonte na topologia atual e marca a corrente de falta e o tempo de cada relé.
+4. A opção **Caminho selecionado** desenha os relés entre a falta selecionada e a fonte no estado atual da rede e marca a corrente de falta e o tempo de cada relé.
 
 ### Roteiro 6. Critérios de coordenação e pontos críticos
 
-1. Na aba **Proteção**, desça até **Critérios de coordenação e sensibilidade**.
+1. Na aba **Proteção**, clique em **Critérios de coordenação e sensibilidade**.
 2. A tabela lista os pares fora do critério no esquema escolhido. **Descoordenado** significa que o relé a montante atua antes de o disjuntor a jusante abrir; **abaixo** significa margem menor que o critério do TCC (0,4 s entre barra e alimentador; 0,3 s ao longo do alimentador).
-3. Troque o esquema e as opções da aba **IEC 61850** e veja a contagem mudar. Com seletividade lógica estendida ao 51 não resta par descoordenado.
+3. Com a janela aberta, troque o esquema e as opções da aba **IEC 61850** e veja a contagem mudar. Com seletividade lógica estendida ao 51 não resta par descoordenado.
 4. A segunda tabela mostra a sensibilidade (múltiplo mínimo de 2,4 na fase e 4,0 no neutro) e o tempo do 51 na própria barra comparado com o critério das Tabs. 4.11 e 4.12.
 
 ### Roteiro 7. Ensaios de laboratório (Cap. 5 e apêndices)
 
 1. Abra a aba **Ensaios**.
-2. Em **5.5 Sobrecorrente (Apêndice A)**, clique em **Mostrar**: aparecem os gráficos I × t dos quatro relés (como as Figs. A1 a A4) e as tabelas com o tempo medido e o simulado.
+2. Clique em **Pontos I × t dos relés ensaiados**: abre uma janela com os gráficos I × t dos quatro relés (como as Figs. A1 a A4) e as tabelas com o tempo medido e o simulado.
 3. Em cada ensaio de religamento, seletividade lógica ou 50BF, clique em **Executar**.
-4. **O que você obtém:** a animação no diagrama, a tabela com o valor citado no TCC, o medido no relatório da mala CE-6006 e o simulado, e o diagrama de tempos do ensaio. Os ensaios usam a base (Tab. 4.13) com os ajustes do relé ensaiado quando diferem dela e 13 ms de processamento do relé.
+4. **O que você obtém:** a animação no diagrama e uma janela com o valor citado no TCC, o medido no relatório da mala CE-6006 e o simulado, e o diagrama de tempos do ensaio. Os ensaios usam a base (Tab. 4.13) com os ajustes do relé ensaiado quando diferem dela e 13 ms de processamento do relé.
 
 ### Roteiro 8. Conferir os números do TCC
 
-1. Aba **Análises**: compare os curtos de cada barra com a Tab. 4.7 e o curto e a carga máximos de cada relé com a Tab. 4.8.
+1. Aba **Análises**: **Curtos-circuitos nas barras** compara com a Tab. 4.7; **Curto e carga máximos por relé**, com a Tab. 4.8.
 2. Clique em uma barra ou trecho para ver as correntes de curto no ponto (aba **Falta**).
 3. O relatório completo está em `docs/VALIDACAO.md`.
 
 ### Roteiro 9. Ajustes de campo (Anexo B)
 
-1. Na aba **Proteção**, troque **Tab. 4.13 (base)** por **Anexo B (extra)**.
+1. Na aba **Proteção**, em **Conjunto de ajustes**, troque **Tab. 4.13 (base)** por **Anexo B (extra)**.
 2. Um aviso explica os valores adotados onde o Anexo B é omisso, e a barra de status passa a mostrar **Ajustes: Anexo B**.
 3. Repita os roteiros 3 a 6 para comparar. Volte para a base pelo mesmo seletor; executar um ensaio também volta para a base.
 
 ### Roteiro 10. Editar o ajuste de um relé
 
-1. Na aba **Proteção**, clique na linha do relé na tabela de ajustes.
+1. Na aba **Proteção**, abra **Tabela de ajustes** e clique na linha do relé (ou clique no religador no diagrama e use **Editar ajustes**).
 2. Altere pickup, dial, curva, instantâneo, atraso, ciclo ou tempo morto e clique em **Aplicar ajustes**.
 3. O relé recebe o selo **editado**. Use **Restaurar ajustes e parâmetros originais** para desfazer.
 
@@ -134,21 +140,20 @@ O site guarda no navegador a topologia, o conjunto de ajustes e as opções da �
 | Item do TCC | Onde ver no site |
 |---|---|
 | Fig. 4.2 (topologia) e Fig. 4.3 (recomposição) | diagrama; cenário pronto "Fig. 4.3" |
-| Fig. 4.1 (primeira topologia) | seletor **Topologia** (extra, dados de Nobre, 2013) |
-| Tabs. 4.1, 4.2, 4.4 a 4.6 (cabos, cargas, impedâncias) | clique em um trecho (aba Falta); carregamento na aba Análises |
-| Tab. 4.7 e Fig. 4.6 (curtos) | aba Análises; aba Falta para qualquer ponto |
-| Tab. 4.8 (TCs, curto e carga máximos) | aba Análises |
-| Tabs. 4.9 a 4.12 (critérios) | aba Proteção, Critérios de coordenação e sensibilidade |
-| Tab. 4.13 (ajustes) | aba Proteção, tabela de ajustes (base) |
-| Figs. 4.9 a 4.13 (coordenogramas) | aba Proteção, seletor Coordenograma |
+| Tabs. 4.1, 4.2, 4.4 a 4.6 (cabos, cargas, impedâncias) | clique em um trecho (aba Falta); Análises, Carregamento dos trechos |
+| Tab. 4.7 e Fig. 4.6 (curtos) | Análises, Curtos-circuitos nas barras; aba Falta para qualquer ponto |
+| Tab. 4.8 (TCs, curto e carga máximos) | Análises, Curto e carga máximos por relé |
+| Tabs. 4.9 a 4.12 (critérios) | Proteção, Critérios de coordenação e sensibilidade |
+| Tab. 4.13 (ajustes) | Proteção, Tabela de ajustes (base) |
+| Figs. 4.9 a 4.13 (coordenogramas) | Proteção, Coordenogramas |
 | Seção 4.7.3 (pontos críticos) | aba Proteção, critérios; roteiro 3 |
 | Fig. 2.3 e Tab. 2.1 (curvas) | aba Proteção, Famílias de curvas |
 | Cap. 3 (50BF, seletividade lógica, trip, religamento) | aba IEC 61850; roteiros 3 e 4; coluna 79 da tabela de ajustes |
-| Tab. 5.1 (datasets GOOSE) | aba IEC 61850 |
-| Seção 5.5 e Apêndice A | aba Ensaios, 5.5 Sobrecorrente |
-| Seções 5.6 e 5.7, Apêndices B e C | aba Ensaios; diagrama de tempos |
-| Anexo A (ANAFAS) | impedâncias das SEs ESB e AGF (premissas da aba Fontes; correntes de curto na aba Falta) |
-| Anexo B (ajustes de campo) | aba Proteção, seletor de ajustes (extra) |
+| Tab. 5.1 (datasets GOOSE) | IEC 61850, Datasets GOOSE |
+| Seção 5.5 e Apêndice A | Ensaios, Pontos I × t dos relés ensaiados |
+| Seções 5.6 e 5.7, Apêndices B e C | Ensaios (resultado de cada ensaio); Eventos, Diagrama de tempos |
+| Anexo A (ANAFAS) | impedâncias das SEs ESB e AGF (Fontes e premissas; correntes de curto na aba Falta) |
+| Anexo B (ajustes de campo) | Proteção, Conjunto de ajustes (extra) |
 
 ## 6. Como ler os resultados
 
@@ -156,8 +161,8 @@ O site guarda no navegador a topologia, o conjunto de ajustes e as opções da �
 - **Correntes:** ampères primários, salvo os ensaios do Apêndice A (ampères secundários, como na mala).
 - **Ciclo de religamento:** nos religadores da SE, `1I+2T` são três religamentos (aberturas 50, 50, 51, 51); nos de linha, `3I` são três aberturas pelo instantâneo. A coluna **79** da tabela de ajustes mostra o estado: repouso, ciclo ou bloqueio.
 - **Selos:** **planilha** marca relé fora da Tab. 4.13 com ajustes da planilha do autor; **editado**, relé alterado pelo usuário.
-- **Base e extras:** a base é a Fig. 4.2 com a Tab. 4.13. A Fig. 4.1, o Anexo B e os ajustes do laboratório são extras e aparecem identificados.
+- **Base e extras:** a base é a Fig. 4.2 com a Tab. 4.13. O Anexo B e os ajustes do laboratório são extras e aparecem identificados.
 
 ## 7. Limitações
 
-Fluxo de carga simplificado, relés não direcionais, sem saturação de TC nem transitórios eletromagnéticos, tempos fixos de abertura do disjuntor (50 ms) e de GOOSE (3 ms), sem modelar a rede Ethernet. A lista completa está em `docs/METODOLOGIA.md` e na aba Fontes.
+Fluxo de carga simplificado, relés não direcionais, sem saturação de TC nem transitórios eletromagnéticos, tempos fixos de abertura do disjuntor (50 ms) e de GOOSE (3 ms), sem modelar a rede Ethernet. A lista completa está em `docs/METODOLOGIA.md` e na janela Fontes e premissas.
