@@ -77,6 +77,7 @@
       );
       return;
     }
+    root.append(el('button', { type: 'button', class: 'btn', style: { alignSelf: 'flex-start' }, onclick: () => { app.select(null); app.renderPanel(); } }, '← Voltar ao início (Como usar e cenários prontos)'));
     if (sel.type === 'seg') return segPanel(app, root, model.segments[sel.id]);
     if (sel.type === 'sw') return swPanel(app, root, model.switches[sel.id]);
     if (sel.type === 'bus') return busPanel(app, root, model.nodes[sel.id]);
