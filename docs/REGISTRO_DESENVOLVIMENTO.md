@@ -250,3 +250,31 @@ Itens do TCC que continuam fora: diagramas de lógica copiados do manual do SEL-
 ### 14.3 Guia de uso
 
 Não havia guia passo a passo: o README explicava como executar e o que o site faz, e a aba Falta tinha um parágrafo de instruções. Foram criados `docs/GUIA_DE_USO.md` (mapa da tela, função de cada aba, doze roteiros com o resultado esperado, mapa item do TCC → local no site e leitura dos resultados) e a aba **Guia** no site, com o mesmo conteúdo resumido.
+
+## 15. Sexta sessão: interface em janelas, tema, remoção da Fig. 4.1 e GitHub Pages
+
+**Pedido:** (1) tema claro/escuro; (2) tabelas, valores e gráficos em janelas que se fecham, para despoluir o painel; (3) comparar com o repositório da Equipe 2 (Gemini); (4) remover a primeira topologia (Fig. 4.1, Nobre, 2013) e o seletor de topologia; (5) guia no lugar do seletor, aberto em janela, e fontes em local discreto; (6) link web pelo GitHub para a equipe.
+
+### 15.1 Alterações
+
+| Item | Antes | Agora |
+|---|---|---|
+| Painel lateral | oito abas, com tabelas e gráficos empilhados na própria aba | seis abas (Falta, Eventos, Análises, Proteção, IEC 61850, Ensaios) só com controles e botões ↗ |
+| Tabelas e gráficos | dentro das abas | 16 janelas (`js/ui/windows.js`): arrastáveis pelo título, redimensionáveis, fecham no X ou com Esc, várias ao mesmo tempo; no celular, ocupam a parte de baixo da tela |
+| Atualização | painel redesenhado a cada mudança | janelas abertas são redesenhadas quando a simulação muda; Carregamento e Tabela de ajustes acompanham a animação |
+| Resultado de ensaio | tabela dentro do cartão do ensaio | janela aberta ao executar; o cartão ganha o botão "Resultado ↗" |
+| Guia | aba | botão na barra superior, no lugar do seletor de topologia |
+| Fontes | aba | link "Fontes e premissas" no rodapé |
+| Tema | só automático (sistema) | botão claro/escuro na barra superior, salvo no navegador |
+| Fig. 4.1 (Nobre, 2013) | topologia extra selecionável | removida: dados, cenário pronto, três testes, seções 3 e 4 do relatório de validação e referências na interface |
+| Publicação | artefato do Claude | GitHub Pages a partir da `main` (arquivo `.nojekyll`; passos no README) |
+
+Os valores, modelos e resultados não mudaram: a suíte passou de 28 para 25 testes só pela retirada dos testes da Fig. 4.1, e `docs/VALIDACAO.md` foi regenerado com as seções renumeradas. Nobre (2013) continua citado como origem do critério de recomposição pela maior carga restabelecida e dos grupos de ajuste por contingência, que o TCC adota.
+
+### 15.2 Comparação com o repositório da Equipe 2 (Gemini)
+
+Repositório `pvictor25/self-healing-aquiraz-gemini`, commit 98d4382 (9 nov. 2026).
+
+- **Dependência do simulador da Equipe 3.** `documentacao/PLANO_IMPLEMENTACAO_RECURSOS_SIMULADOR.md` declara como objetivo incorporar "o conjunto completo de recursos [...] identificados no simulador de referência desenvolvido pela Equipe Claude" e aponta para este repositório; a tabela do plano compara item a item "Versão Claude (Equipe 3)" e "Versão Gemini Atual (Equipe 2)". Os dados em `simulacao/src/data` e os módulos de `simulacao/src/core` seguem a estrutura daqui. Para o artigo, isso é uma ameaça à independência da comparação e precisa constar no método (o que cada equipe viu, quando, e com quais prompts).
+- **Motor efetivamente usado pelo `index.html` deles:** curto calculado só a partir da SE AQZ (sem as fontes ESB e AGF após a recomposição); curva só IEC MI; 13 ms de processamento somados também ao 51; recomposição com chaves de isolamento e de encontro fixas por trecho; nenhuma ocorrência de GOOSE, 50BF ou seletividade lógica no código.
+- **Recursos de interface que eles têm e este simulador não tinha:** tema claro/escuro (incorporado nesta sessão), desfazer/refazer, exportar o diagrama em PNG, modos de inserir e remover falta e de manobra, mostrar ou ocultar comprimentos e grade, várias faltas simultâneas, cartão didático passo a passo e publicação no GitHub Pages (incorporada nesta sessão).

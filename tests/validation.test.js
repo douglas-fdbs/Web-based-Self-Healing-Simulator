@@ -1,6 +1,6 @@
 /*
  * Validação do simulador contra os valores publicados no TCC (Rodrigues, 2015)
- * e em Nobre (2013). Executar com:  node --test tests/
+ * e nos relatórios dos ensaios. Executar com:  node --test tests/
  */
 'use strict';
 const test = require('node:test');
@@ -9,12 +9,11 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..', 'js');
 ['core/complex', 'core/network', 'core/shortcircuit', 'core/protection', 'core/selfhealing', 'core/simulator', 'core/coordination',
-  'data/aquiraz_tcc2015', 'data/aquiraz_nobre2013', 'data/lab_tests'].forEach((f) => require(path.join(root, `${f}.js`)));
+  'data/aquiraz_tcc2015', 'data/lab_tests'].forEach((f) => require(path.join(root, `${f}.js`)));
 const SH = globalThis.SH;
 const N = SH.network;
 const SC = SH.shortcircuit;
 const tcc = N.buildModel(SH.scenarios.tcc2015);
-const nobre = N.buildModel(SH.scenarios.nobre2013);
 
 const relErr = (a, b) => Math.abs(a - b) / Math.abs(b);
 const faultScript = (seg, x = 0.5, type = '3F', temporary = false) => [{ t: 0, type: 'fault', spec: { kind: 'segment', seg, x, type }, temporary }];
@@ -78,17 +77,8 @@ test('TCC Tab. 4.7: curtos 3F, 2F, FT e FTm nas barras (erro < 0,1%)', () => {
   });
 });
 
-test('Nobre Tab. 3.6: curtos no fim de cada trecho (erro < 0,01%)', () => {
-  SH.scenarios.nobre2013.validation.tab36.forEach((v) => {
-    const r = SC.pathFault(nobre, v.source, v.path);
-    [r.i3f, r.i2f, r.ift, r.iftm].forEach((x, i) => {
-      assert.ok(relErr(x, v.tcc[4 + i]) < 1e-4, `${v.seg} coluna ${i}: ${x.toFixed(2)} x ${v.tcc[4 + i]}`);
-    });
-  });
-});
-
-test('operação normal sem sobrecarga e sem malha (as duas topologias)', () => {
-  [tcc, nobre].forEach((m) => {
+test('operação normal sem sobrecarga e sem malha', () => {
+  [tcc].forEach((m) => {
     const topo = N.analyze(m, N.normalState(m));
     assert.equal(topo.conflicts.length, 0);
     const flows = N.computeFlows(m, topo);
@@ -125,21 +115,6 @@ test('TCC: intertravamento impede fechar RL1 em paralelo entre SE AQZ e SE ESB',
   const res = SH.simulator.run(tcc, { script: [{ t: 0, type: 'close', sw: 'RL1' }] });
   assert.equal(res.finalState.sw.RL1.closed, false);
   assert.ok(res.log.some((e) => /intertravamento/.test(e.text)));
-});
-
-test('Nobre Tab. 4.2: recomposição para falta em cada trecho', () => {
-  SH.scenarios.nobre2013.validation.tab42.forEach((v) => {
-    const seg = nobre.segments[v.fault] ? v.fault : `${v.fault}a`;
-    const res = SH.simulator.run(nobre, { script: faultScript(seg) });
-    // Religamentos de disjuntores que atuaram sem seletividade não constam na
-    // Tab. 4.2 (que supõe proteção seletiva) e são verificados à parte.
-    const reclosed = res.log.filter((e) => e.cat === 'sra' && /^Religar/.test(e.text)).map((e) => e.dev);
-    const acts = sraActions(res).filter((a) => !reclosed.includes(a.split(' ')[1]));
-    const opened = acts.filter((a) => a.startsWith('abre')).map((a) => a.slice(5)).sort();
-    const closed = acts.filter((a) => a.startsWith('fecha')).map((a) => a.slice(6)).sort();
-    assert.deepEqual(opened, v.open.slice().sort(), `${v.fault}: abertura`);
-    assert.deepEqual(closed, v.close.slice().sort(), `${v.fault}: fechamento`);
-  });
 });
 
 // Ensaios do Cap. 5 contra os relatórios da mala CE-6006 (pasta ARTIGO_REI).
@@ -296,10 +271,3 @@ test('Varredura: com SL no 50 e no 51, toda falta na configuração normal é el
   }));
 });
 
-test('Nobre: falta no início de T8 abre 21I5 e RS3 juntos (instantâneos sem atraso); o SRA religa 21I5', () => {
-  const res = SH.simulator.run(nobre, { script: faultScript('T8a', 0.5) });
-  const tripped = res.log.filter((e) => e.cat === 'trip').map((e) => e.dev).sort();
-  assert.deepEqual(tripped, ['AQZ21I5', 'RS3']);
-  assert.equal(res.finalState.sw.AQZ21I5.closed, true);
-  assert.equal(res.finalState.sw.RL3.closed, true);
-});

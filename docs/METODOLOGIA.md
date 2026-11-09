@@ -4,7 +4,7 @@ Este documento descreve os modelos implementados, as equações usadas e as prem
 
 ## 0. Base e extras
 
-A base é a que o TCC documenta como final: topologia da Fig. 4.2 e ajustes da Tab. 4.13. Os relés fora da Tab. 4.13 (21S7, 21S1, 21I2 e RS7) usam os cálculos do autor na planilha do TCC. No esquema convencional, o 50/50N da proteção geral de barra fica bloqueado (seção 3.3.2). Ficam como extras, selecionáveis e identificados na interface: a Fig. 4.1 (Nobre, 2013), os ajustes de campo do Anexo B e os ajustes do laboratório, estes só nos presets de ensaio.
+A base é a que o TCC documenta como final: topologia da Fig. 4.2 e ajustes da Tab. 4.13. Os relés fora da Tab. 4.13 (21S7, 21S1, 21I2 e RS7) usam os cálculos do autor na planilha do TCC. No esquema convencional, o 50/50N da proteção geral de barra fica bloqueado (seção 3.3.2). Ficam como extras, selecionáveis e identificados na interface: os ajustes de campo do Anexo B e os ajustes do laboratório, estes só nos presets de ensaio. A primeira topologia (Fig. 4.1, dados de Nobre, 2013) existiu nas versões iniciais e foi removida a pedido da equipe (registro, seção 15).
 
 Cada grupo de ajuste pode ter ciclo e tempo morto próprios. Isso é necessário para o RL3: alimentado por 21I6 ele é o terceiro nível (1I, 13 s) e alimentado por 21I5, o segundo (2I, 12 s).
 
@@ -15,7 +15,7 @@ A rede é um grafo com dois tipos de ramo:
 - **trechos**: impedâncias de sequência positiva e zero em pu (base 100 MVA, 13,8 kV), carga pesada concentrada no ponto médio e ampacidade do cabo limitante;
 - **chaves**: religadores e disjuntores, com estado aberto ou fechado e relé associado.
 
-Na topologia da Fig. 4.2 as impedâncias vêm da Tab. 4.6. Elas foram conferidas a partir da composição de cabos (Tab. 4.5) e das impedâncias por quilômetro (Tab. 4.4): a diferença máxima é de 0,0006 pu, atribuível a arredondamento. Na topologia da Fig. 4.1 as impedâncias vêm da Tab. 3.4 de Nobre (2013).
+As impedâncias vêm da Tab. 4.6. Elas foram conferidas a partir da composição de cabos (Tab. 4.5) e das impedâncias por quilômetro (Tab. 4.4): a diferença máxima é de 0,0006 pu, atribuível a arredondamento.
 
 As subestações são fontes ideais atrás de suas impedâncias equivalentes de Thévenin. Para a SE AQZ usa-se o trecho "AQZ" da Tab. 4.6; para as SEs ESB e AGF, o relatório ANAFAS do Anexo A, necessário quando trechos passam a ser alimentados por essas subestações.
 
@@ -34,7 +34,7 @@ Método das componentes simétricas (seção 2.5.2), com Z1 = Z2, tensão pré-f
 | Fase-terra | IFT = 3 · Ibase / \|2·Z1 + Z0 + 3·Rf\| |
 | Fase-terra mínima | IFT com Rf = Rc = 100 Ω |
 
-Z1 e Z0 são as impedâncias acumuladas da fonte até o ponto da falta, incluindo a fração do trecho em falta. O valor Rc = 100 Ω não está escrito no TCC; ele foi obtido reproduzindo a coluna IccFTm da Tab. 4.7 (79,7 A na barra de AQZ) e confere também com a Tab. 3.6 de Nobre.
+Z1 e Z0 são as impedâncias acumuladas da fonte até o ponto da falta, incluindo a fração do trecho em falta. O valor Rc = 100 Ω não está escrito no TCC; ele foi obtido reproduzindo a coluna IccFTm da Tab. 4.7 (79,7 A na barra de AQZ).
 
 Os relés enxergam a corrente de fase (I3F, I2F ou IFT) e a residual 3I0 (igual a IFT nas faltas à terra). A corrente de carga pré-falta não é somada à corrente de falta, como nos cálculos do TCC.
 
@@ -49,7 +49,7 @@ Rede radial, cargas como correntes constantes iguais à carga pesada de cada tre
 ### 4.1 Elementos de sobrecorrente
 
 - **51P e 51N**: curva IEC, t = TD · β / (M^α − 1), com M = I / Ipickup (Eq. 2.2 e Tab. 2.1). O múltiplo é limitado a M ≤ 30. Os coordenogramas do TCC (Figs. 4.9 a 4.13) mostram a curva 51N achatada em cerca de 0,2 s a partir de M ≈ 30, o que indica essa limitação. Sem ela, o 51N dos religadores da SE (pickup de 26 A) atuaria em menos de 100 ms para faltas à terra de 1,6 kA e perderia a coordenação com os religadores de linha.
-- **50P e 50N**: tempo definido igual ao atraso da Tab. 4.13. Nos ajustes de Nobre (2013), que não têm atraso intencional, o tempo é zero.
+- **50P e 50N**: tempo definido igual ao atraso da Tab. 4.13.
 - **Integração no tempo**: o 51 acumula o progresso ∫dt/t(I) entre eventos (disco de indução) e rearma instantaneamente quando a corrente cai abaixo do pickup.
 
 **Curvas.** Além das quatro curvas IEC, estão disponíveis as três curvas IEEE da Tab. 2.1 do TCC, na forma t = TD · (β / (M^α − 1) + L). Para a curva IEEE moderadamente inversa foram usados os coeficientes da IEEE C37.112 (α = 0,02 e L = 0,114); a Tab. 2.1 imprime α = 2 e L = 0,18.
@@ -124,10 +124,7 @@ O tempo avança de evento em evento. Tipos de evento: falta, trip de relé, cheg
 | Tempo de rearme do 79 | 45 s | o TCC não informa; valor da OAP 165/2013 e do relé AQZ ensaiado |
 | Ajustes de 21S7, 21S1 e 21I2 | planilha de cálculos do autor (abas "SE ESB", "SE AGF" e "Dimensionamento TC e TP"); ciclo 1I+2T e tempo morto de 10 s | fora da Tab. 4.13; ciclo pelo critério da Tab. 4.11, repetido nas abas da planilha |
 | Ajustes de RS7 | fase pela planilha; neutro e 79 pelos critérios da Tab. 4.12 (22 A, 3I, 11 s) | fora da Tab. 4.13; o 51N da planilha (71,1 A) segue critério antigo |
-| Ajustes de 21F3, 21M3 e 21I7 (AGF) em Nobre | iguais aos alimentadores da SE AQZ | não informados |
-| Conexão de RP1 e RP2 (Fig. 4.1) | meio dos trechos T1, T4 e T8 | diagrama de impedâncias não disponível |
-| Religamento na topologia de Nobre | desabilitado | não especificado na fonte |
-| Rc da falta fase-terra mínima | 100 Ω | reproduz as Tabs. 4.7 e 3.6 |
+| Rc da falta fase-terra mínima | 100 Ω | reproduz a Tab. 4.7 |
 | Múltiplo máximo das curvas | 30 | coerente com os coordenogramas do TCC e usado na planilha de cálculos do autor ("ajustado devido ao múltiplo") |
 | Interrupção do disjuntor | 50 ms | valor típico de 3 ciclos; é também o atraso programado na mala nos ensaios |
 | Processamento do relé | 0 ms (livre) e 13 ms (ensaios) | calibrado nos relatórios da mala |

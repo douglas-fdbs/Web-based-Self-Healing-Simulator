@@ -86,14 +86,11 @@
     app.edited = {};
     app.editRelay = null;
     app.cause = null;
-    if (app.lastTest && id !== 'tcc2015') app.lastTest = null;
-    $('scnSel').value = id;
     app.diagram = SH.ui.createDiagram($('diagram'), $('tooltip'), app.model, { onSelect: (s) => app.select(s) });
     app.diagram.setShowCurrents(app.showCurrents);
     renderLegend();
     setIdle(N.normalState(app.model));
     if (!keepPanel) app.renderPanel();
-    SH.ui.storeSet('aqz-sh-scn', id);
   }
 
   function rebuildModelKeepState() {
@@ -183,7 +180,7 @@
   };
 
   app.runExample = (ex) => {
-    if (ex.scenario !== app.scnId) loadScenario(ex.scenario, true);
+    if (ex.scenario && ex.scenario !== app.scnId) loadScenario(ex.scenario, true);
     app.cause = null;
     setIdle(N.normalState(app.model));
     if (ex.fault) {
@@ -228,8 +225,7 @@
     app.diagram.setSelection(app.sel);
     player.load(res, true);
     app.renderPanel();
-    const card = document.getElementById(`test-${t.id}`);
-    if (card) card.scrollIntoView({ block: 'nearest' });
+    app.openWin('ensaio');
   };
 
   // ------------------------------------------------------------- seleção e abas
@@ -257,8 +253,24 @@
     });
   }
 
+  // janelas flutuantes (tabelas, gráficos, guia e fontes)
+  app.openWin = (id) => {
+    const W = SH.ui.panels.WINDOWS[id];
+    if (!W) return;
+    const t = id === 'ensaio' && app.lastTest ? SH.labs.tests.find((x) => x.id === app.lastTest.id) : null;
+    SH.ui.windows.open(id, {
+      title: t ? `Ensaio: ${t.title}` : W.title, sub: t ? t.ref : W.sub, width: W.width, live: W.live,
+      render: (body) => W.render(app, body), onClose: () => renderPanelOnly(),
+    });
+    renderPanelOnly();
+  };
+
   let lastPanelTab = null;
   app.renderPanel = () => {
+    renderPanelOnly();
+    SH.ui.windows.refresh();
+  };
+  function renderPanelOnly() {
     const box = $('tabpanel');
     const keep = lastPanelTab === app.tab ? box.scrollTop : 0;
     box.innerHTML = '';
@@ -272,7 +284,7 @@
     box.scrollTop = keep;
     lastPanelTab = app.tab;
     renderTabs();
-  };
+  }
 
   app.highlightLog = () => {
     const list = $('eventList');
@@ -421,7 +433,8 @@
       if (changed || force) {
         renderStatus();
         if (app.tab === 'eventos') app.highlightLog();
-        else if (changed && (app.tab === 'analises' || (app.tab === 'falta' && app.sel && app.sel.type !== 'seg'))) app.renderPanel();
+        else if (changed && app.tab === 'falta' && app.sel && app.sel.type !== 'seg') renderPanelOnly();
+        if (changed) SH.ui.windows.refresh(true);
       } else if (app.tab === 'eventos' && this.playing) {
         app.highlightLog();
       }
@@ -446,12 +459,37 @@
     requestAnimationFrame(loop);
   }
 
+  // ------------------------------------------------------------- tema
+  const THEME_KEY = 'aqz-sh-theme';
+  const sysDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const effTheme = () => document.documentElement.dataset.theme || (sysDark() ? 'dark' : 'light');
+  function paintThemeBtn() {
+    const b = $('btnTheme');
+    const dark = effTheme() === 'dark';
+    b.title = dark ? 'Mudar para o tema claro' : 'Mudar para o tema escuro';
+    b.setAttribute('aria-label', b.title);
+    b.innerHTML = dark
+      ? '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="3.2"/><path d="M7.3 0h1.4v2.6H7.3zM7.3 13.4h1.4V16H7.3zM0 7.3h2.6v1.4H0zM13.4 7.3H16v1.4h-2.6zM2.1 3.1l1-1 1.8 1.8-1 1zM11.1 12.1l1-1 1.8 1.8-1 1zM2.1 12.9l1.8-1.8 1 1-1.8 1.8zM11.1 3.9l1.8-1.8 1 1-1.8 1.8z"/></svg>'
+      : '<svg viewBox="0 0 16 16"><path d="M6.2 1.2a6.8 6.8 0 1 0 8.6 8.6A5.6 5.6 0 0 1 6.2 1.2z"/></svg>';
+  }
+  function initTheme() {
+    const saved = SH.ui.storeGet(THEME_KEY, null);
+    if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+    paintThemeBtn();
+    $('btnTheme').addEventListener('click', () => {
+      const next = effTheme() === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      SH.ui.storeSet(THEME_KEY, next);
+      paintThemeBtn();
+    });
+  }
+
   // ------------------------------------------------------------- inicialização
   function init() {
     loadOptions();
-    const scnSel = $('scnSel');
-    Object.values(SH.scenarios).forEach((s) => scnSel.append(el('option', { value: s.id, text: s.name })));
-    scnSel.addEventListener('change', () => loadScenario(scnSel.value));
+    initTheme();
+    $('btnGuide').addEventListener('click', () => app.openWin('guia'));
+    $('btnSources').addEventListener('click', () => app.openWin('fontes'));
     document.querySelectorAll('#schemeToggle button').forEach((b) => b.addEventListener('click', () => setScheme(b.dataset.v)));
     $('sraToggle').addEventListener('change', (e) => { app.options.sra = e.target.checked; app.optionsChanged(); });
     $('btnReset').addEventListener('click', () => app.reset());
@@ -466,14 +504,14 @@
     });
     $('btnEnd').addEventListener('click', () => player.toEnd());
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && SH.ui.windows.closeTop()) return;
       if (e.target.closest('input, select, textarea, button')) return;
       if (e.code === 'Space') { e.preventDefault(); $('btnPlay').click(); }
       if (e.key === 'Escape') app.select(null);
     });
     syncHeader();
     app.settingsSet = SH.ui.storeGet('aqz-sh-set', 'base') || 'base';
-    const startScn = SH.ui.storeGet('aqz-sh-scn', 'tcc2015');
-    loadScenario(SH.scenarios[startScn] ? startScn : 'tcc2015');
+    loadScenario('tcc2015');
     requestAnimationFrame(loop);
     window.AQZ = app; // acesso pelo console do navegador
   }

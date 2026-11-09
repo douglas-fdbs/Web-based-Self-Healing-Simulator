@@ -213,7 +213,7 @@
     res.log.forEach((e) => { if (e.cat === 'trip' && e.t <= tEnd && e.dev) { const id = opts.relayOfSw(e.dev); if (id && first[id] == null) first[id] = e.t; } });
     const ids = Object.keys(first).sort((a, b) => first[a] - first[b]).slice(0, 8);
     const laneH = 30;
-    const W = 380;
+    const W = opts.width || 380;
     const m = { l: 62, r: 10, t: 8, b: 26 };
     const H = m.t + laneH * (ids.length + 1) + m.b + 4;
     const X = (t) => m.l + ((t - tStart) / (tEnd - tStart)) * (W - m.l - m.r);
